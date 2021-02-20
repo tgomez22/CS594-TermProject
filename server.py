@@ -5,11 +5,13 @@ class client:
         this.name = name
 
 class room:
-    clients = list[client]
-
     def __init__(this, name, clients):
         this.name = name
-        this.clients = clients
+        this.clients = clients #list of clients
+
+class irc_packet:
+    opcode = 3000
+
 
 class server:
     
