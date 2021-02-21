@@ -1,13 +1,11 @@
 import socket
+import irc_protocol
 
-class client:
-    def __init__(this, name):
-        this.name = name
-
+#TODO 
 class room:
-    def __init__(this, name, clients):
-        this.name = name
-        this.clients = clients #list of clients
+    def __init__(self, name, clients):
+        self.name = name
+        self.clients = clients #list of clients
 
 class irc_packet:
     opcode = 3000
@@ -15,94 +13,108 @@ class irc_packet:
 
 class server:
     
-    def __init__(this):
-        # key = client.name, value = client object
-        this.clientDictionary = []
+    def __init__(self):
+        self.clientList = []
         
-        this.lobby = room("Lobby", this.clientDictionary)
+        self.lobby = room("Lobby", self.clientList)
+        
         # key = room.name, value = room object
-
+        self.roomDictionary = dict({lobby.name: lobby})
         
-        this.roomDictionary = dict({lobby.name: lobby})
-        
-        this.IRC_OPCODE_REGISTER_CLIENT_RESP = 2000
-        this.IRC_OPCODE_KEEPALIVE = 2001
-        this.IRC_OPCODE_LIST_ROOMS_RESP = 2002
-        this.IRC_OPCODE_LIST_USERS_RESP = 2003
-        this.IRC_OPCODE_JOIN_ROOM_RESP = 2004
-        this.IRC_OPCODE_SEND_MSG = 2005
-
-        this.IRC_ERR = 3000
-        this.IRC_ERR_NAME_EXISTS = 3001
-        this.IRC_ERR_ILLEGAL_LENGTH = 3002
-        this.IRC_ERR_ILLEGAL_OPCODE = 3003
-        this.IRC_ERR_ILLEGAL_NAME = 3004
-        this.IRC_ERR_ILLEGAL_MESSAGE = 3005
-        this.IRC_ERR_TOO_MANY_USERS = 3006
-        this.IRC_ERR_TOO_MANY_ROOMS = 3007
-        this.IRC_ERR_RECIPIENT_DOES_NOT_EXIST = 3008
-        this.IRC_ERR_TIMEOUT = 3009
-        this.IRC_ERR_ROOM_DOES_NOT_EXIST = 3010
-        this.IRC_ERR_ROOM_ALREADY_EXISTS = 3011
-
-        this.port = 6667
-        this.host = ''
-        this.welcomeSocket = socket(socket.AF_INET, socket.SOCK_STREAM)
-        this.welcomeSocket.bind()
+        self.port = 6667
+        self.host = ''
+        self.welcomeSocket = socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.welcomeSocket.bind()
     
-    def registerClient(this, newClient):
-        if(this.checkIfClientExists(this, newClient) == False):
-            this.clientDictionary[newClient.name] = newClient
-       # else:
-            #send back errOpCode to newClient
-            #print("something")
-
-    def checkIfClientExists(this, potentialClient):
-        if potentialClient.name in this.clientDictionary.keys(): 
-            return True
+    def registerClient(self, newClient):
+        #check if legal name
+        if(len(newClient) < 1 or len(newClient) > 32 or newClient.startswith(' ') or newClient.endswith(' ')):
+            return ircOpcodes.IRC_ERR_ILLEGAL_NAME
+        for letter in newClient:
+            if(ord(letter) < 32 or ord(letter) > 126):
+                return ircOpcodes.IRC_ERR_ILLEGAL_NAME
+        
+        if newClient in self.clientList:
+            return ircOpcodes.IRC_ERR_NAME_EXISTS
         else:
-            return False
+            if newClient in roomDictionary.keys():
+                return ircOpcodes.IRC_ERR_NAME_EXISTS
+            else:    
+                self.clientList.append(newClient)
+                return ircOpcodes.IRC_OPCODE_REGISTER_CLIENT_RESP
 
-    def addClientToRoom(this, requestingClient:client, requestedRoom:room):
-        if (this.checkIfClientExists(this, requestingClient) == True):
-            if(this.checkIfRoomExists(requestedRoom) == True):
-                this.roomDictionary[requestedRoom.name].clients.append()
-            # else: # send IRC_ERR_ROOM_DOES_NOT_EXIST
-        #else: #send IRC_ERR and close  connection
+    def addClientToRoom(self, requestingClient, requestedRoom):
+
+        #if client exists
+        if requestingClient in self.clientList:
+
+            #if room exists
+            if requestedRoom in roomDictionary.keys():
+
+                #if room can handle more users
+                if(len(self.roomDictionary[requestedRoom]) < 100):
+                    self.roomDictionary[requestedRoom].clients.append()
+                    return ircPacket(header(ircOpcodes.IRC_OPCODE_JOIN_ROOM_RESP, 0), "")
+
+                #if room is full
+                else:
+                    return ircPacket(header(ircOpcodes.IRC_ERR_TOO_MANY_USERS, 0), "")
+            
+            #room doesn't exist
+            else:
+                return ircPacket(header(ircOpcodes.IRC_ERR_ROOM_DOES_NOT_EXIST, 0), "") 
+        
+        else: 
+            #do we need CLOSE CONNECTION functionality here???
+            return ircPacket(header(ircOpcodes.IRC_ERR, 0), "")
 
 
-    
-    def sendClientNames(this, requestingClient:client):
-        # send this.clientDictionary.keys() to requestingCLient
-
-    # def sendMessageToClient(this, sendingClient:client, receivingClient:client, message):
-       # if (this. checkIfClientExists(this, receivingClient) == True):
+    # def sendMessageToClient(self, sendingClient:client, receivingClient:client, message):
+       # if (self. checkIfClientExists(self, receivingClient) == True):
             # send message to receivingClient from sendingClient
         #else:
             # send IRC_ERR_RECIPIENT_DOES_NOT_EXIST
             
             
-    def registerRoom(this, newRoom:room, requestingClient:client):
-        if(this.checkIfRoomExists(this, newRoom) == False)
-            this.roomDictionary[newRoom.name] = newRoom
-       # else: 
+    def registerRoom(self, newRoom:room, requestingClient):
+        if newRoom in roomDictionary.keys():
             #send room already exists Erno to user. IRC_ERR_ROOM_ALREADY_EXIST
+            return
+        else: 
+            self.roomDictionary[newRoom.name] = newRoom
 
-    def checkIfRoomExists(this, potentialRoom:client):
-        if potentialRoom.name in this.roomDictionary.keys():
-            return True
-        else:
-            return False    
 
-    def sendAllRoomNames(this, requestingClient:client):
-        # send this.roomDictionary.keys() to requestingClient
+    def sendAllRoomNames(self, requestingClient):
+        # send self.roomDictionary.keys() to requestingClient
         
-    def sendRoomsForClient(this, requestingClient:client):
+    def sendRoomsForClient(self, requestingClient):
         # TODO search client list for each room, and return list of rooms for client
 
 
-    def sendMessageToRoom(this, sendingClient:client, roomName:room, message):
-        if(this.checkIfRoomExists(this, roomName) == True):
-            #send message to this.roomDictionary.name from sendingClient
+    def sendMessageToRoom(self, sendingClient, roomName:room, message):
+        if roomName in self.roomDictionary.keys():
+            #send message to self.roomDictionary.name from sendingClient
         else:
             # send IRC_ERR_RECIPIENT_DOES_NOT_EXIST
+
+    def handlePacket(self, packet: ircPacket):
+        
+        #register new client
+        if(ircPacket.header.opCode == ircOpcodes.IRC_OPCODE_REGISTER_CLIENT_REQ):
+            return ircPacket(ircHeader(self.registerClient(ircPacket.payload.senderName), 0) "")
+            
+        #list rooms request
+        elif(ircPacket.header.opCode == ircOpcodes.IRC_OPCODE_LIST_ROOMS_REQ):
+            return ircPacket(ircHeader(ircOpcodes.IRC_OPCODE_LIST_ROOMS_RESP, len(self.roomDictionary.keys()), self.roomDictionary.keys())  # in payload
+            
+        #list users request
+        elif(ircPacket.header.opCode == ircOpcodes.IRC_OPCODE_LIST_USERS_REQ):
+            return ircPacket(ircHeader(ircOpcodes.IRC_OPCODE_LIST_USERS_RESP, len(self.clientList)), self.clientList)
+
+        #join room request
+        elif(ircPacket.header.opCode == ircOpcodes.IRC_OPCODE_JOIN_ROOM_REQ):
+            return self.addClientToRoom(ircPacket.payload.senderName, ircPacket.payload.content)    
+        
+        #send message
+        elif(ircPacket.header.opCode == ircOpcodes.IRC_OPCODE_SEND_MSG_REQ):
+            if ():
