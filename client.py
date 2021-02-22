@@ -6,45 +6,109 @@ class client:
         self.name = name
         # key - senderName    value - list messages
         self.messageDictionary = dict()
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        
         self.serverPort = 6667
-        self.serverIP = #??????????#
+        self.serverIP = "127.0.0.1"
         self.buffSize = 4096
 
-    def receiveMessage(self, roomName: str, receivedMessage: message):
+
+    def initializeConnection(self):
+        self.clientSocket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+        try:
+            self.clientSocket.connect((self.serverIP, self.serverPort))
+        except socket.error as e:
+            print(str(e))
+            
+        serverResponse = self.clientSocket.recv(self.buffSize)
+        # self.clientSocket.send(str.encode(irc_protocol.ircPacket(irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_REGISTER_CLIENT_REQ, len(self.name)), self.name )))
+        while True:
+            Input = input('say something: ')
+            self.clientSocket.send(str.encode(Input))
+            serverResponse = self.clientSocket.recv(self.buffSize)
+            print(serverResponse.decode('utf-8'))
+
+        self.clientSocket.close()
+
+        # if(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_ERR_NAME_EXISTS):
+        #     print("Sorry, that name already exists. Please choose another one. \n")
+        #     return False
+        # elif(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_ERR_ILLEGAL_NAME):
+        #     print("Sorry, that name isn't valid. Please choose another one. \n")
+        #     return False
+        # else:
+        #     return True
+    
+
+    def receiveMessage(self, roomName: str, receivedMessage):
         if roomName in self.messageDictionary.keys():
             self.messageDictionary[roomName].append(receivedMessage)
         else: 
             self.messageDictionary[roomName] = receivedMessage
 
-    def getCurrentRooms(self):
-        #ask server for all active rooms
-        openRooms = # server's open rooms in array of strings format
-        if(len(openRooms) == 1):
-            print(f"{openRooms[i]} is the only active room")
-        for roomName in openRooms:
-            print(f"{roomName} is active\n")
+    def getAllRooms(self):
+       self.clientSocket.send(irc_protocol.ircPacket(irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_LIST_ROOMS_RESP, 0), ""))
+       serverResponse = self.clientSocket.recv(self.buffSize)
+       if(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_LIST_ROOMS_RESP):
+           print("Here is a list of valid rooms: \n")
+           for room in serverResponse.payload:
+               print(f"Room Name: {room}\n")
+       else:
+           print("Sorry we have encountered an unexpected error and could not get a list of active rooms.\n")
+           print("Please try again later. \n")
+
+    def joinARoom(self):
+        desiredRoom = input("What room do you wish to join?: ")
+        self.clientSocket.send(irc_protocol.ircPacket(irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_JOIN_ROOM_REQ, len(desiredRoom)), desiredRoom))
+        serverResponse = self.clientSocket.recv(self.buffSize)
+        
+        #room successfully joined //not finished yet
+        if(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_JOIN_ROOM_RESP):
+            print(f"You have successfully joined {desiredRoom}! Start chatting now!\n")
+
+        #too many users in room
+        elif(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_ERR_TOO_MANY_USERS):
+            print(f"You cannot currently join {desiredRoom} because it is currently full.\n")
+            print("Please try again later.\n")
+        
+        #room doesn't exist
+        elif(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_ERR_ROOM_DOES_NOT_EXIST):
+            print(f"Sorry, but {desiredRoom} doesn't exist. \n")
+            print("Please make a new room or try to join a different one.\n")
+
+        #already in room
+        elif(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_ERR_USER_ALREADY_IN_ROOM):
+            print(f"Silly goose! You are already in {desiredRoom}.\n")
+            print("Try the '-enterroom' or '-er' command.\n")
+
+        #unexpected error code
+        else:
+            print("{Insert Scary Warning Message Here} ... just kidding\n")
+            print("We somehow received an error that we didn't expect!\n")
+            print("Please try again later.\n")
+
+
     
-    def sendMessage(self):
-        bool userDone = False
-        while(userDone == False):
-            userMessage = input("Message: ")
-            if(lower(userMessage) == "-quit" or  lower(userMessage) == "-q"):
-                userDone = True
-            elif(lower(userMessage) == "-listusers" or lower(userMessage) == "-lu"):
-                #print users in room, may have to query server
-            elif(lower(userMessage) == "-help"):
-                self.listCommands()
-            elif(lower(userMessage) == "-makeroom"):
-                #send request to server #def registerRoom(self, newRoom:room, requestingClient:client):
-            elif(lower(userMessage) == "-listrooms"):
-                #send request to server 
-            elif(lower(userMessage) == "-myrooms")
-                # send request to server
-            else:
-                #send to server
+    # def sendMessage(self):
+    #     userDone = False
+    #     while(userDone == False):
+    #         userMessage = input("Message: ")
+            # if(lower(userMessage) == "-quit" or  lower(userMessage) == "-q"):
+            #     userDone = True
+            # elif(lower(userMessage) == "-listusers" or lower(userMessage) == "-lu"):
+            #     #print users in room, may have to query server
+            # elif(lower(userMessage) == "-help"):
+            #     self.listCommands()
+            # elif(lower(userMessage) == "-makeroom"):
+            #     #send request to server #def registerRoom(self, newRoom:room, requestingClient:client):
+            # elif(lower(userMessage) == "-listrooms"):
+            #     #send request to server 
+            # elif(lower(userMessage) == "-myrooms")
+            #     # send request to server
+            # else:
+            #     #send to server
     
-    def showAllReceivedMessages(self, roomName: str)
+   # def showAllReceivedMessages(self, roomName: str)
 
     def listCommands(self):
         print("Hello, here are all the available commands: \n")
@@ -57,32 +121,33 @@ class client:
         print("'-exit' will end the program. \n")
 
     def makeRoom(self):
-        bool validRoom = False
         roomName = input("What would you like your room to be called: ")
-        #send roomName to server
-        validRoom = #await server response
-        if(validRoom == False):
-            print("Sorry, the room couldn't be made with self name. \n")
-            print("Please try again later with a new name. \n")
+        self.clientSocket.send(irc_protocol.ircPacket(irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_MAKE_ROOM_REQ, len(roomName)), roomName))
+        serverResponse = self.clientSocket.recv(self.buffSize)
+
+        #room made successfully
+        if(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_MAKE_ROOM_RESP):
+            print(f"{roomName} was successfully created!\n")
+            print("Enter the room to begin chatting!\n")
+
+        #room already exists
         else:
             #change state to be in new room???????
             print("Success! You're room was able to be created.\n")
             print(f"Welcome to {roomName}")
             self.messageDictionary[roomName] = f"Welcome to {roomName}"
 
-    def initializeConnection(self):
-        self.socket.setsockopt(socket.IPPROTO_TCP, socket.SO_KEEPALIVE, 1)
-        self.socket.connect((self.serverIP, self.serverPort))
-        initMessage = message(self.name, "")
-        initHeader = ircHeader(1000, 0)
-        initPacket = ircPacket(initHeader, initMessage)        
-        self.socket.send(initPacket)
+        #Too many rooms already exist
 
-        #packet from server
-        serverResponse = self.socket.recv(bufsize)
+        #Illegal name
+
+        #Illegal Name length
+
+        #generic unexpected error
+            
         
-    def handlePacket(self, packer: ircPacket):
-
+Tristan = client("Tristan")
+Tristan.initializeConnection()
         
 
     
