@@ -1,5 +1,6 @@
 import socket
 import irc_protocol
+import pickle
 
 class client:
     def __init__(self, name):
@@ -21,12 +22,16 @@ class client:
             print(str(e))
             
         serverResponse = self.clientSocket.recv(self.buffSize)
-        # self.clientSocket.send(str.encode(irc_protocol.ircPacket(irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_REGISTER_CLIENT_REQ, len(self.name)), self.name )))
+        byteStream = pickle.dumps(irc_protocol.ircPacket(irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_REGISTER_CLIENT_REQ, len(self.name)), self.name))
+        self.clientSocket.send(byteStream)
+        #self.clientSocket.send(str.encode(irc_protocol.ircPacket(irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_REGISTER_CLIENT_REQ, len(self.name)), self.name )))
         while True:
-            Input = input('say something: ')
-            self.clientSocket.send(str.encode(Input))
+            #Input = input('say something: ')
+            #self.clientSocket.send(str.encode(Input))
             serverResponse = self.clientSocket.recv(self.buffSize)
-            print(serverResponse.decode('utf-8'))
+            formattedServerResponse = pickle.loads(serverResponse)
+            print(formattedServerResponse)
+            #print(serverResponse.decode('utf-8'))
 
         self.clientSocket.close()
 

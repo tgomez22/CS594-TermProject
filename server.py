@@ -1,5 +1,6 @@
 import socket
 import irc_protocol
+import pickle
 
 from _thread import *
 
@@ -32,10 +33,11 @@ class server:
         connection.send(str.encode('Welcome to Tristan and Lydia\'s IRC Server!\n'))
         while True:
             data = connection.recv(self.buffSize)
-            reply = 'Server Says: ' + data.decode('utf-8')
-            if not data:
+            formattedData = pickle.loads(data)
+            reply = 'Server Says: ' + str(formattedData.header.opCode)
+            if not formattedData:
                 break
-            connection.sendall(str.encode(reply))
+            connection.sendall(pickle.dumps(reply))
         connection.close()
 
     def startServer(self):
