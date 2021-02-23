@@ -22,7 +22,7 @@ class server:
         
         # key = roomName, value = list of clients joined in room
         self.roomDictionary = {"Lobby":[]}
-        
+        self.name = "Tristan and Lydia's IRC Server"
         self.host = '127.0.0.1'
         self.port = 6667
         self.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -33,11 +33,14 @@ class server:
         connection.send(str.encode('Welcome to Tristan and Lydia\'s IRC Server!\n'))
         while True:
             data = connection.recv(self.buffSize)
-            formattedData = pickle.loads(data)
-            reply = 'Server Says: ' + str(formattedData.header.opCode)
-            if not formattedData:
+            clientRegisterRequestPacket = pickle.loads(data)
+
+            print(f"\n\nclientRegisterRequestPacket type: {type(clientRegisterRequestPacket)}\n\n")
+
+            registerResponsePacket = self.handlePacket(clientRegisterRequestPacket)
+            if not clientRegisterRequestPacket:
                 break
-            connection.sendall(pickle.dumps(reply))
+            connection.sendall(pickle.dumps(registerResponsePacket))
         connection.close()
 
     def startServer(self):
@@ -60,19 +63,19 @@ class server:
     def registerClient(self, newClient):
         #check if legal name
         if(len(newClient) < 1 or len(newClient) > 32 or newClient.startswith(' ') or newClient.endswith(' ')):
-            return ircOpcodes.IRC_ERR_ILLEGAL_NAME
+            return irc_protocol.ircOpcodes.IRC_ERR_ILLEGAL_NAME
         for letter in newClient:
             if(ord(letter) < 32 or ord(letter) > 126):
-                return ircOpcodes.IRC_ERR_ILLEGAL_NAME
+                return irc_protocol.ircOpcodes.IRC_ERR_ILLEGAL_NAME
         
         if newClient in self.clientList:
-            return ircOpcodes.IRC_ERR_NAME_EXISTS
+            return irc_protocol.ircOpcodes.IRC_ERR_NAME_EXISTS
         else:
-            if newClient in roomDictionary.keys():
-                return ircOpcodes.IRC_ERR_NAME_EXISTS
+            if newClient in self.roomDictionary.keys():
+                return irc_protocol.ircOpcodes.IRC_ERR_NAME_EXISTS
             else:    
                 self.clientList.append(newClient)
-                return ircOpcodes.IRC_OPCODE_REGISTER_CLIENT_RESP
+                return irc_protocol.ircOpcodes.IRC_OPCODE_REGISTER_CLIENT_RESP
 
     def addClientToRoom(self, requestingClient, requestedRoom):
 
@@ -137,10 +140,13 @@ class server:
             # send IRC_ERR_RECIPIENT_DOES_NOT_EXIST
 
     def handlePacket(self, packet: irc_protocol.ircPacket):
-        
+        print(f"\npacket type: {type(packet)}\n")
+
+
         #register new client
         if(packet.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_REGISTER_CLIENT_REQ):
-            return irc_protocol.ircPacket(irc_protocol.ircHeader(self.registerClient(packet.payload.senderName), 0), "")
+            regClientHeader = irc_protocol.ircHeader(self.registerClient(packet.payload), 0)
+            return irc_protocol.ircPacket(regClientHeader, "")
             
         #list rooms request
         elif packet.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_LIST_ROOMS_REQ:

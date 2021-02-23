@@ -24,14 +24,17 @@ class client:
         serverResponse = self.clientSocket.recv(self.buffSize)
         byteStream = pickle.dumps(irc_protocol.ircPacket(irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_REGISTER_CLIENT_REQ, len(self.name)), self.name))
         self.clientSocket.send(byteStream)
-        #self.clientSocket.send(str.encode(irc_protocol.ircPacket(irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_REGISTER_CLIENT_REQ, len(self.name)), self.name )))
+        
         while True:
-            #Input = input('say something: ')
-            #self.clientSocket.send(str.encode(Input))
+            
             serverResponse = self.clientSocket.recv(self.buffSize)
             formattedServerResponse = pickle.loads(serverResponse)
-            print(formattedServerResponse)
-            #print(serverResponse.decode('utf-8'))
+            if(formattedServerResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_REGISTER_CLIENT_RESP):
+                print("Successfully joined server\n")
+            else:
+                print("Couldn't join\n")
+                print(f"{formattedServerResponse.header.opCode}\n")
+        
 
         self.clientSocket.close()
 
