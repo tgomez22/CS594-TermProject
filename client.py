@@ -85,8 +85,12 @@ class client:
             print("Please try again later. \n")
 
     def joinARoom(self):
+        self.getAllRooms()
         desiredRoom = input("What room do you wish to join?: ")
-        self.clientSocket.send(pickle.dumps(irc_protocol.ircPacket(irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_JOIN_ROOM_REQ, len(desiredRoom)), desiredRoom)))
+        joinRoomPayload = irc_protocol.joinRoomPayload(self.name, desiredRoom)
+        payloadLength = len(desiredRoom) + len(self.name)
+        joinRoomHeader = irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_JOIN_ROOM_REQ, payloadLength)
+        self.clientSocket.send(pickle.dumps(irc_protocol.ircPacket(joinRoomHeader, joinRoomPayload)))
         serverResponse = pickle.loads(self.clientSocket.recv(self.buffSize))
         
         #room successfully joined //not finished yet
@@ -179,18 +183,7 @@ class client:
         #generic unexpected error
             
         
-Tristan = client("Tristan")
-Tristan.initializeConnection()
-Tristan.getAllRooms()
-Tristan.getAllUsers()
-Tristan.makeRoom()
-Tristan.getAllRooms()
-#Tristan.joinARoom()
-Tristan.clientSocket.close()
+
     
-        
-        
-
-
 
 

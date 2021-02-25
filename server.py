@@ -74,6 +74,7 @@ class server:
                 return ircOpcodes.IRC_ERR_NAME_EXISTS
             else:    
                 self.clientList.append(newClient)
+                self.roomDictionary["Lobby"].append(newClient)
                 return ircOpcodes.IRC_OPCODE_REGISTER_CLIENT_RESP
 
     def addClientToRoom(self, requestingClient, requestedRoom):
@@ -88,7 +89,7 @@ class server:
 
                     #if room can handle more users 
                     if(len(self.roomDictionary[requestedRoom]) < 100):
-                        self.roomDictionary[requestedRoom].clients.append()
+                        self.roomDictionary[requestedRoom].append(requestingClient)
                         return ircPacket(ircHeader(ircOpcodes.IRC_OPCODE_JOIN_ROOM_RESP, 0), "")
 
                     #if room is full
@@ -149,7 +150,7 @@ class server:
                 return ircOpcodes.IRC_ERR_ILLEGAL_NAME
         #valid room name, create room
         else:
-            self.roomDictionary[packet.payload.roomName] = packet.payload.senderName
+            self.roomDictionary[packet.payload.roomName] = [packet.payload.senderName]
             return ircOpcodes.IRC_OPCODE_MAKE_ROOM_RESP
       
     def handlePacket(self, packet: ircPacket):
@@ -178,7 +179,7 @@ class server:
 
         #join room request
         elif packet.header.opCode == ircOpcodes.IRC_OPCODE_JOIN_ROOM_REQ:
-            return self.addClientToRoom(packet.payload.senderName, packet.payload.content)    
+            return self.addClientToRoom(packet.payload.senderName, packet.payload.roomName)    
         
         #send message
       #  elif(ircPacket.header.opCode == ircOpcodes.IRC_OPCODE_SEND_MSG_REQ):
