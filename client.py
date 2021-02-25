@@ -17,7 +17,6 @@ class client:
         #Lydia:
         # here is a message from Lydia
         # 
-        #
 
         self.serverPort = 6667
         self.serverIP = "127.0.0.1"
