@@ -1,13 +1,21 @@
 from enum import Enum
  
-class messagePayload:
-    def __init__(self, senderName: str, receiverName, message):
+#server to client
+class message:
+    def __init__( self, senderName, messageBody):
         self.senderName = senderName
-        self.receiverName = receiverName
-        self.message = message
+        self.messageBody = messageBody
+    
+    def display(self):
+        print(f"From {self.senderName}:\n")
+        print(f"{self.messageBody}\n")
 
-    def show(self):
-        print(f"{self.senderName}: {self.message}")
+#client to server
+class messagePayload:
+    def __init__(self, senderName: str, receiverName, messageBody):
+        self.receiverName = receiverName
+        self.message = message(senderName, messageBody)
+        
 
 class joinRoomPayload:
     def __init__(self, senderName: str, roomName: str):

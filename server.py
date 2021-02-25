@@ -136,7 +136,22 @@ class server:
     #         #send message to self.roomDictionary.name from sendingClient
     #     else:
             # send IRC_ERR_RECIPIENT_DOES_NOT_EXIST
+    def makeNewRoom(self, packet):
 
+        #room exits return err
+        if packet.payload.roomName in self.roomDictionary.keys():
+            return ircOpcodes.IRC_ERR_ROOM_ALREADY_EXISTS
+        #illegal room name, return err
+        elif(len(packet.payload.roomName) < 1 or len(packet.payload.roomName) > 32 or packet.payload.roomName.startswith(' ') or packet.payload.roomName.endswith(' ')):
+            return ircOpcodes.IRC_ERR_ILLEGAL_NAME
+        for letter in packet.payload.roomName:
+            if(ord(letter) < 32 or ord(letter) > 126):
+                return ircOpcodes.IRC_ERR_ILLEGAL_NAME
+        #valid room name, create room
+        else:
+            self.roomDictionary[packet.payload.roomName] = packet.payload.senderName
+            return ircOpcodes.IRC_OPCODE_MAKE_ROOM_RESP
+      
     def handlePacket(self, packet: ircPacket):
         # print(f"\npacket type: {type(packet)}\n")
 
@@ -156,6 +171,10 @@ class server:
         #list users request
         elif(packet.header.opCode == ircOpcodes.IRC_OPCODE_LIST_USERS_REQ):
             return ircPacket(ircHeader(ircOpcodes.IRC_OPCODE_LIST_USERS_RESP, len(self.clientList)), self.clientList)
+
+        #make new room request
+        elif(packet.header.opCode == ircOpcodes.IRC_OPCODE_MAKE_ROOM_REQ):
+            return ircPacket(ircHeader(self.makeNewRoom(packet),0), "")
 
         #join room request
         elif packet.header.opCode == ircOpcodes.IRC_OPCODE_JOIN_ROOM_REQ:

@@ -1,4 +1,4 @@
-#from server import server
+
 import socket
 import irc_protocol
 import pickle
@@ -6,10 +6,19 @@ import pickle
 class client:
     def __init__(self, name):
         self.name = name
-        # key - senderName    value - list messages
+        # key - senderName/roomName    value - list messages
         self.messageDictionary = dict()
         self.clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        #(roomName, ("from: Tristan - yadayadayada", "from: Lydia - response"))
         
+        #Tristan:
+        #here is the message from Tristan
+        #
+        #Lydia:
+        # here is a message from Lydia
+        # 
+        #
+
         self.serverPort = 6667
         self.serverIP = "127.0.0.1"
         self.buffSize = 4096
@@ -140,9 +149,13 @@ class client:
 
     def makeRoom(self):
         roomName = input("What would you like your room to be called: ")
-        self.clientSocket.send(pickle.dumps(irc_protocol.ircPacket(irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_MAKE_ROOM_REQ, len(roomName)), roomName)))
+        payloadLength = len(roomName) + len(self.name)
+        makeRoomRequestPacketHeader = irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_MAKE_ROOM_REQ, payloadLength)
+        makeRoomRequestPacket = irc_protocol.ircPacket(makeRoomRequestPacketHeader, irc_protocol.joinRoomPayload(self.name, roomName))
+
+        self.clientSocket.send(pickle.dumps(makeRoomRequestPacket))
         serverResponse = pickle.loads(self.clientSocket.recv(self.buffSize))
-        print(serverResponse.decode('utf-8') + "\n")
+        #print(serverResponse.decode('utf-8') + "\n")
         print(f"\ntype of server response: {type(serverResponse)}\n")
 
         #room made successfully
@@ -169,9 +182,9 @@ class client:
 Tristan = client("Tristan")
 Tristan.initializeConnection()
 Tristan.getAllRooms()
+Tristan.getAllUsers()
 Tristan.makeRoom()
 Tristan.getAllRooms()
-#Tristan.getAllUsers()
 #Tristan.joinARoom()
 Tristan.clientSocket.close()
     
