@@ -1,6 +1,5 @@
-import socket
 from enum import Enum
-
+ 
 class messagePayload:
     def __init__(self, senderName: str, receiverName, message):
         self.senderName = senderName

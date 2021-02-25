@@ -1,3 +1,4 @@
+#from server import server
 import socket
 import irc_protocol
 import pickle
@@ -24,19 +25,17 @@ class client:
         serverResponse = self.clientSocket.recv(self.buffSize)
         byteStream = pickle.dumps(irc_protocol.ircPacket(irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_REGISTER_CLIENT_REQ, len(self.name)), self.name))
         self.clientSocket.send(byteStream)
-        
-        while True:
             
-            serverResponse = self.clientSocket.recv(self.buffSize)
-            formattedServerResponse = pickle.loads(serverResponse)
-            if(formattedServerResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_REGISTER_CLIENT_RESP):
-                print("Successfully joined server\n")
-            else:
-                print("Couldn't join\n")
-                print(f"{formattedServerResponse.header.opCode}\n")
+        serverResponse = self.clientSocket.recv(self.buffSize)
+        formattedServerResponse = pickle.loads(serverResponse)
+        if(formattedServerResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_REGISTER_CLIENT_RESP):
+            print("Successfully joined server\n")
+        else:
+            print("Couldn't join\n")
+            print(f"{formattedServerResponse.header.opCode}\n")
         
 
-        self.clientSocket.close()
+        #self.clientSocket.close()
 
         # if(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_ERR_NAME_EXISTS):
         #     print("Sorry, that name already exists. Please choose another one. \n")
@@ -55,8 +54,8 @@ class client:
             self.messageDictionary[roomName] = receivedMessage
 
     def getAllRooms(self):
-       self.clientSocket.send(irc_protocol.ircPacket(irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_LIST_ROOMS_RESP, 0), ""))
-       serverResponse = self.clientSocket.recv(self.buffSize)
+       self.clientSocket.send(pickle.dumps(irc_protocol.ircPacket(irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_LIST_ROOMS_REQ, 0), "")))
+       serverResponse = pickle.loads(self.clientSocket.recv(self.buffSize))
        if(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_LIST_ROOMS_RESP):
            print("Here is a list of valid rooms: \n")
            for room in serverResponse.payload:
@@ -65,10 +64,21 @@ class client:
            print("Sorry we have encountered an unexpected error and could not get a list of active rooms.\n")
            print("Please try again later. \n")
 
+    def getAllUsers(self):
+        self.clientSocket.send(pickle.dumps(irc_protocol.ircPacket(irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_LIST_USERS_REQ, 0), "")))
+        serverResponse = pickle.loads(self.clientSocket.recv(self.buffSize))
+        if(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_LIST_USERS_RESP):
+            print("Here are all of the active users: \n")
+            for user in serverResponse.payload:
+                print(f"User: {user} \n")
+        else:
+            print("Sorry, we are unable to get a list of users due to an unexpected error.\n")
+            print("Please try again later. \n")
+
     def joinARoom(self):
         desiredRoom = input("What room do you wish to join?: ")
-        self.clientSocket.send(irc_protocol.ircPacket(irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_JOIN_ROOM_REQ, len(desiredRoom)), desiredRoom))
-        serverResponse = self.clientSocket.recv(self.buffSize)
+        self.clientSocket.send(pickle.dumps(irc_protocol.ircPacket(irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_JOIN_ROOM_REQ, len(desiredRoom)), desiredRoom)))
+        serverResponse = pickle.loads(self.clientSocket.recv(self.buffSize))
         
         #room successfully joined //not finished yet
         if(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_JOIN_ROOM_RESP):
@@ -130,8 +140,10 @@ class client:
 
     def makeRoom(self):
         roomName = input("What would you like your room to be called: ")
-        self.clientSocket.send(irc_protocol.ircPacket(irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_MAKE_ROOM_REQ, len(roomName)), roomName))
-        serverResponse = self.clientSocket.recv(self.buffSize)
+        self.clientSocket.send(pickle.dumps(irc_protocol.ircPacket(irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_MAKE_ROOM_REQ, len(roomName)), roomName)))
+        serverResponse = pickle.loads(self.clientSocket.recv(self.buffSize))
+        print(serverResponse.decode('utf-8') + "\n")
+        print(f"\ntype of server response: {type(serverResponse)}\n")
 
         #room made successfully
         if(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_MAKE_ROOM_RESP):
@@ -156,9 +168,12 @@ class client:
         
 Tristan = client("Tristan")
 Tristan.initializeConnection()
-        
-
-    
+Tristan.getAllRooms()
+Tristan.makeRoom()
+Tristan.getAllRooms()
+#Tristan.getAllUsers()
+#Tristan.joinARoom()
+Tristan.clientSocket.close()
     
         
         

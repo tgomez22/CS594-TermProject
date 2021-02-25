@@ -1,7 +1,6 @@
 import socket
-import irc_protocol
 import pickle
-
+from irc_protocol import *
 from _thread import *
 
 #TODO 
@@ -9,11 +8,6 @@ class room:
     def __init__(self, name, clients):
         self.name = name
         self.clients = clients #list of clients
-
-class irc_packet:
-    opcode = 3000
-
-
 class server:
     
     def __init__(self):
@@ -33,14 +27,16 @@ class server:
         connection.send(str.encode('Welcome to Tristan and Lydia\'s IRC Server!\n'))
         while True:
             data = connection.recv(self.buffSize)
-            clientRegisterRequestPacket = pickle.loads(data)
+            # print(f"\ntype of data: {type(data)}\n")
 
-            print(f"\n\nclientRegisterRequestPacket type: {type(clientRegisterRequestPacket)}\n\n")
+            clientRequestPacket = pickle.loads(data)
 
-            registerResponsePacket = self.handlePacket(clientRegisterRequestPacket)
-            if not clientRegisterRequestPacket:
+            # print(f"\ntype of unpickled data: {type(clientRequestPacket)}\n")
+            responsePacket = self.handlePacket(clientRequestPacket)
+
+            if not clientRequestPacket:
                 break
-            connection.sendall(pickle.dumps(registerResponsePacket))
+            connection.send(pickle.dumps(responsePacket))
         connection.close()
 
     def startServer(self):
@@ -54,39 +50,41 @@ class server:
 
         while True:
             client, address = self.serverSocket.accept()
+            
             print(f'Connected to: {address[0]}: {str(address[1])}')
+            
             start_new_thread(self.threaded_client, (client, ))
             self.threadCount += 1
-            print(f'Thread number: {str(self.threadCount)}')
+            
+            #print(f'Thread number: {str(self.threadCount)}')
         self.serverSocket.close()
 
     def registerClient(self, newClient):
         #check if legal name
         if(len(newClient) < 1 or len(newClient) > 32 or newClient.startswith(' ') or newClient.endswith(' ')):
-            return irc_protocol.ircOpcodes.IRC_ERR_ILLEGAL_NAME
+            return ircOpcodes.IRC_ERR_ILLEGAL_NAME
         for letter in newClient:
             if(ord(letter) < 32 or ord(letter) > 126):
-                return irc_protocol.ircOpcodes.IRC_ERR_ILLEGAL_NAME
+                return ircOpcodes.IRC_ERR_ILLEGAL_NAME
         
         if newClient in self.clientList:
-            return irc_protocol.ircOpcodes.IRC_ERR_NAME_EXISTS
+            return ircOpcodes.IRC_ERR_NAME_EXISTS
         else:
             if newClient in self.roomDictionary.keys():
-                return irc_protocol.ircOpcodes.IRC_ERR_NAME_EXISTS
+                return ircOpcodes.IRC_ERR_NAME_EXISTS
             else:    
                 self.clientList.append(newClient)
-                return irc_protocol.ircOpcodes.IRC_OPCODE_REGISTER_CLIENT_RESP
+                return ircOpcodes.IRC_OPCODE_REGISTER_CLIENT_RESP
 
     def addClientToRoom(self, requestingClient, requestedRoom):
-
         #if client exists
         if requestingClient in self.clientList:
 
             #if room exists
-            if requestedRoom in roomDictionary.keys():
+            if requestedRoom in self.roomDictionary.keys():
 
                 #client is not already in room
-                if not requestingClient in roomDictionary[requestedRoom]:
+                if not requestingClient in self.roomDictionary[requestedRoom]:
 
                     #if room can handle more users 
                     if(len(self.roomDictionary[requestedRoom]) < 100):
@@ -118,7 +116,7 @@ class server:
             
             
     def registerRoom(self, newRoom:room, requestingClient):
-        if newRoom in roomDictionary.keys():
+        if newRoom in self.roomDictionary.keys():
             #send room already exists Erno to user. IRC_ERR_ROOM_ALREADY_EXIST
             return
         else: 
@@ -139,26 +137,28 @@ class server:
     #     else:
             # send IRC_ERR_RECIPIENT_DOES_NOT_EXIST
 
-    def handlePacket(self, packet: irc_protocol.ircPacket):
-        print(f"\npacket type: {type(packet)}\n")
-
+    def handlePacket(self, packet: ircPacket):
+        # print(f"\npacket type: {type(packet)}\n")
 
         #register new client
-        if(packet.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_REGISTER_CLIENT_REQ):
-            regClientHeader = irc_protocol.ircHeader(self.registerClient(packet.payload), 0)
-            return irc_protocol.ircPacket(regClientHeader, "")
+        if(packet.header.opCode == ircOpcodes.IRC_OPCODE_REGISTER_CLIENT_REQ):
+            regClientHeader = ircHeader(self.registerClient(packet.payload), 0)
+            return ircPacket(regClientHeader, "")
             
         #list rooms request
-        elif packet.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_LIST_ROOMS_REQ:
-            return irc_protocol.ircPacket(irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_LIST_ROOMS_RESP, len(self.roomDictionary.keys())), self.roomDictionary.keys())
+        elif (packet.header.opCode == ircOpcodes.IRC_OPCODE_LIST_ROOMS_REQ):
+            rooms = list(self.roomDictionary.keys())
+            temp = ircPacket(ircHeader(ircOpcodes.IRC_OPCODE_LIST_ROOMS_RESP, len(rooms)), rooms)
+            print(f"The get all rooms response is: {type(temp)}")
+            return(temp)
             # in payload
             
         #list users request
-        elif(packet.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_LIST_USERS_REQ):
-            return irc_protocol.ircPacket(irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_LIST_USERS_RESP, len(self.clientList)), self.clientList)
+        elif(packet.header.opCode == ircOpcodes.IRC_OPCODE_LIST_USERS_REQ):
+            return ircPacket(ircHeader(ircOpcodes.IRC_OPCODE_LIST_USERS_RESP, len(self.clientList)), self.clientList)
 
         #join room request
-        elif packet.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_JOIN_ROOM_REQ:
+        elif packet.header.opCode == ircOpcodes.IRC_OPCODE_JOIN_ROOM_REQ:
             return self.addClientToRoom(packet.payload.senderName, packet.payload.content)    
         
         #send message
