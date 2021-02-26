@@ -17,7 +17,7 @@ class messagePayload:
         self.message = message(senderName, messageBody)
         
 
-class joinRoomPayload:
+class roomPayload:
     def __init__(self, senderName: str, roomName: str):
         self.senderName = senderName
         self.roomName = roomName
@@ -43,6 +43,10 @@ class ircOpcodes(Enum):
     IRC_OPCODE_SEND_MSG_REQ = 1005
     IRC_OPCODE_LIST_MEMBERS_OF_ROOM_REQ = 1006
     IRC_OPCODE_MAKE_ROOM_REQ = 1007
+    IRC_OPCODE_SEND_PRIV_MSG_REQ = 1008
+    IRC_OPCODE_START_PRIV_CHAT_REQ = 1009
+    IRC_OPCODE_SEND_BROADCAST_REQ = 1010
+    IRC_OPCODE_LEAVE_ROOM_REQ = 1011
     
     IRC_OPCODE_REGISTER_CLIENT_RESP = 2000
     IRC_OPCODE_SERVER_KEEPALIVE = 2001
@@ -51,6 +55,10 @@ class ircOpcodes(Enum):
     IRC_OPCODE_JOIN_ROOM_RESP = 2004
     IRC_OPCODE_SEND_MSG_RESP = 2005
     IRC_OPCODE_MAKE_ROOM_RESP = 2006
+    IRC_OPCODE_LIST_MEMBERS_OF_ROOM_RESP = 2007
+    IRC_OPCODE_SEND_PRIV_MSG_RESP = 2008
+    IRC_OPCODE_START_PRIV_CHAT_RESP = 2009
+    IRC_OPCODE_SEND_BROADCASE_RESP = 2010
 
     IRC_ERR = 3000
     IRC_ERR_NAME_EXISTS = 3001

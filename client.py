@@ -7,17 +7,9 @@ class client:
     def __init__(self, name):
         self.name = name
         # key - senderName/roomName    value - list messages
-        self.messageDictionary = dict()
+        self.messageDictionary = dict()        
         self.clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        #(roomName, ("from: Tristan - yadayadayada", "from: Lydia - response"))
-        
-        #Tristan:
-        #here is the message from Tristan
-        #
-        #Lydia:
-        # here is a message from Lydia
-        # 
-
+        self.currentRoom = ""
         self.serverPort = 6667
         self.serverIP = "127.0.0.1"
         self.buffSize = 4096
@@ -38,6 +30,9 @@ class client:
         formattedServerResponse = pickle.loads(serverResponse)
         if(formattedServerResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_REGISTER_CLIENT_RESP):
             print("Successfully joined server\n")
+            self.currentRoom = "Lobby"
+            self.messageDictionary["Lobby"] = []
+            
         else:
             print("Couldn't join\n")
             print(f"{formattedServerResponse.header.opCode}\n")
@@ -76,9 +71,9 @@ class client:
         self.clientSocket.send(pickle.dumps(irc_protocol.ircPacket(irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_LIST_USERS_REQ, 0), "")))
         serverResponse = pickle.loads(self.clientSocket.recv(self.buffSize))
         if(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_LIST_USERS_RESP):
-            print("Here are all of the active users: \n")
+            print("Here are all of the active users:")
             for user in serverResponse.payload:
-                print(f"User: {user} \n")
+                print(f"\tUser: {user}")
         else:
             print("Sorry, we are unable to get a list of users due to an unexpected error.\n")
             print("Please try again later. \n")
@@ -94,16 +89,18 @@ class client:
         
         #room successfully joined //not finished yet
         if(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_JOIN_ROOM_RESP):
-            print(f"You have successfully joined {desiredRoom}! Start chatting now!\n")
+            self.messageDictionary[desiredRoom] = []
+            self.currentRoom = desiredRoom
+            print(f"You have successfully joined {desiredRoom}!\nStart chatting now!\n")
 
         #too many users in room
         elif(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_ERR_TOO_MANY_USERS):
-            print(f"You cannot currently join {desiredRoom} because it is currently full.\n")
+            print(f"You cannot currently join {desiredRoom} because it is currently full.")
             print("Please try again later.\n")
         
         #room doesn't exist
         elif(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_ERR_ROOM_DOES_NOT_EXIST):
-            print(f"Sorry, but {desiredRoom} doesn't exist. \n")
+            print(f"Sorry, but the room: {desiredRoom} doesn't exist. \n")
             print("Please make a new room or try to join a different one.\n")
 
         #already in room
@@ -117,37 +114,130 @@ class client:
             print("We somehow received an error that we didn't expect!\n")
             print("Please try again later.\n")
 
+    def enterRoom(self):
+        desiredRoom = input("What room would you like to enter?: ")
+        if desiredRoom in self.messageDictionary.keys():
+            self.currentRoom = desiredRoom
+            self.showCurrentRoomMessages()
+        else:
+            print("Sorry that room either doesn't exist or you have not joined it yet.\n")
 
+    def enterPrivateChat(self, desiredUser):
+        if desiredUser in self.messageDictionary.keys():
+            self.currentRoom = desiredUser
     
-    # def sendMessage(self):
-    #     userDone = False
-    #     while(userDone == False):
-    #         userMessage = input("Message: ")
-            # if(lower(userMessage) == "-quit" or  lower(userMessage) == "-q"):
-            #     userDone = True
-            # elif(lower(userMessage) == "-listusers" or lower(userMessage) == "-lu"):
-            #     #print users in room, may have to query server
-            # elif(lower(userMessage) == "-help"):
-            #     self.listCommands()
-            # elif(lower(userMessage) == "-makeroom"):
-            #     #send request to server #def registerRoom(self, newRoom:room, requestingClient:client):
-            # elif(lower(userMessage) == "-listrooms"):
-            #     #send request to server 
-            # elif(lower(userMessage) == "-myrooms")
-            #     # send request to server
-            # else:
-            #     #send to server
-    
-   # def showAllReceivedMessages(self, roomName: str)
+    def handleInput(self):
+        userDone = False
+        while(userDone == False):
+            userMessage = input("Message: ")
+            if(str.lower(userMessage) == "-quit" or  str.lower(userMessage) == "-q"):
+                userDone = True
+            elif(str.lower(userMessage) == "-listusers" or str.lower(userMessage) == "-lu"):
+                listUsersPayload = self.currentRoom
+                length = len(self.currentRoom)
+                listUsersHeader = irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_LIST_MEMBERS_OF_ROOM_REQ, length)
+                self.clientSocket.send(pickle.dump(irc_protocol.ircPacket(listUsersHeader, listUsersPayload)))
+                serverResponse = pickle.loads(self.clientSocket.recv(self.buffSize))
+
+                if(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_LIST_MEMBERS_OF_ROOM_RESP):
+                    print(f"Here are the current users in {self.currentRoom}: \n")
+                    for users in serverResponse.payload:
+                        print(f"{users}\n")
+                else:
+                    print(f"We were unable to get the users of the room because it does not exist anymore. \n")
+
+            elif(str.lower(userMessage) == "-help"):
+                self.listCommands()
+            elif(str.lower(userMessage) == "-makeroom"): # -makeroom lydiaroom
+                self.makeRoom()
+            elif(str.lower(userMessage) == "-listrooms"):
+                self.getAllRooms()
+            elif(str.lower(userMessage) == "-myrooms"):
+                print("Here are the rooms you currently are a part of: \n")
+                for room in self.messageDictionary.keys():
+                    print(f"Room Name: {room} \n")
+                print(f"You are currently IN room: {self.roomName}")
+            #enter a room you are registered to
+            elif(str.lower(userMessage == "-er") or str.lower(userMessage == "-enterroom")):
+                self.enterRoom()
+            #send private message
+            elif(str.lower(userMessage == "-pm") or str.lower(userMessage == "-privatemessage")):
+                self.sendPrivateMessage()
+            elif(str.lower(userMessage == "-leave")):
+                self.leaveRoom()
+            #send message to room
+            else:
+                self.sendMessage(userMessage)
+                
+
+    def sendMessage(self, userMessage):
+        message = userMessage
+        length = len(message) + len(self.name) + len(self.currentRoom)
+        messageHeader = irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_SEND_MSG_REQ, length)
+        messagePayload = irc_protocol.messagePayload(self.name, self.currentRoom, message)
+        self.clientSocket.send(pickle.dumps(irc_protocol.ircPacket(messageHeader, messagePayload)))
+        try:
+            serverResponse = self.clientSocket.recv(self.buffSize)
+        except:
+            print("Message could not be processed. Please try again later.\n")
+        
+
+    def sendPrivateMessage(self):
+        desiredUser = input("Who would you like to private message with?: ")
+        print("\n")
+
+        #look to see if private chat thread exists
+        if f"private {desiredUser}" in self.messageDictionary.keys():
+            privateMessageRecipient = "private " + desiredUser
+            self.enterPrivateChat(privateMessageRecipient)
+            print(f"You are now chatting with {desiredUser}")
+            self.showCurrentRoomMessages()
+
+        #start new chat thread
+        else:
+            length = len(desiredUser)
+            privateMessageHeader = irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_START_PRIV_CHAT_REQ, length)
+            privateMessagePayload = irc_protocol.messagePayload(self.name, desiredUser, "")
+            self.clientSocket.send(pickle.dumps(irc_protocol.ircPacket(privateMessageHeader, privateMessagePayload)))
+            try:
+                serverResponse = pickle.loads(self.clientSocket.revc(self.buffSize))
+            except:
+                print("Unexpected server error. We apologize, but we must end the program")
+                quit()
+            
+            if(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_START_PRIV_CHAT_RESP):
+                print(f"You are now chatting with {desiredUser}")
+                self.currentRoom = "private " + desiredUser
+                self.messageDictionary[self.currentRoom] = []
+
+    def showCurrentRoomMessages(self):
+        print(f"Room: {self.currentRoom}")
+        for message in self.messageDictionary[self.currentRoom]:
+            print(f"{message}\n")
+
+    def leaveRoom(self):
+        if(self.currentRoom == "Lobby"):
+            print("Sorry, but you cannot leave the Lobby")
+        else:
+            length = len(self.currentRoom) + len(self.name)
+            header = irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_LEAVE_ROOM_REQ, length)
+            payload = irc_protocol.roomPayload(self.name, self.currentRoom)
+            self.clientSocket.send(pickle.dumps(irc_protocol.ircPacket(header, payload)))
+            self.messageDictionary.pop(self.currentRoom)
+            self.currentRoom = "Lobby"
+            
 
     def listCommands(self):
-        print("Hello, here are all the available commands: \n")
-        print("'-help' for when you want to see all of these commands again. \n")
-        print("'-quit' for when you want to leave your current chat room. \n")
-        print("'-listusers' or '-lu' for when you want to see who else is in the room you are in. \n")
+        print("Hello, here are all the available commands:")
+        print("'-help' for when you want to see all of these commands again.")
+        print("'-quit' or '-q' for when you want to leave your current chat room. \n")
+        print("'-listusers' or '-lu' for when you want to see who else is in the room you are in.")
         print("'-makeroom' for when you want to make a new chat room. \n")
         print("'-listrooms' or '-lr' for when you want to see all available rooms.\n")
         print("'-myrooms' or '-mr' for when you want to see the rooms you are registered in. \n")
+        print("'-er' or '-enterroom' for when you want to enter a new room you are already in. \n")
+        print("'-pm' or '-privatemessage' for when you want to send a private message to another user.\n")
+        print("'-leave' if you want to leave your current room.\n")
         print("'-exit' will end the program. \n")
 
     def makeRoom(self):
@@ -172,6 +262,7 @@ class client:
             print("Success! You're room was able to be created.\n")
             print(f"Welcome to {roomName}")
             self.messageDictionary[roomName] = f"Welcome to {roomName}"
+            self.currentRoom = roomName
 
         #Too many rooms already exist
 
