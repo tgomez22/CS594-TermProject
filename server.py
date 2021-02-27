@@ -41,7 +41,7 @@ class server:
             clientRequestPacket = pickle.loads(data)
 
             # print(f"\ntype of unpickled data: {type(clientRequestPacket)}\n")
-            responsePacket = self.handlePacket(clientRequestPacket)
+            responsePacket = self.handlePacket(clientRequestPacket, connection)
             #TODO check if error message should result in server force closing a connection
                 #if it should force close, send message to client stating why force closing
                 # then do force close
@@ -179,10 +179,16 @@ class server:
         payloadLength = lengthSenderName + lengthMessage
         # ircPacket(ircHeader(ircOpcodes.IRC_OPCODE_SEND_MSG_RESP, payloadLength), packet.payload)
     
-    def forwardMassagePrivate(self, packet:ircPacket):
+    def forwardMassageToClient(self, packet:ircPacket):
         lengthSenderName = len(packet.payload.message.senderName)
+        receiverName = packet.payload.receiverName
         lengthMessage = len(packet.payload.messageBody)
         payloadLength = lengthSenderName + lengthMessage
+
+        forwardHeader = ircHeader(ircOpcodes.IRC_OPCODE_FORWARD_MESSAGE, payloadLength)
+        forwardPacket = ircPacket(forwardHeader, ircPacket.payload)
+        
+        self.clientDictionary[receiverName].send(pickle.dumps(forwardPacket))
 
 
     # packet should have payload with messagePayload that contains a message object
@@ -210,12 +216,12 @@ class server:
         if packet.payload.senderName in self.roomDictionary[packet.payload.roomName]:
             self.roomDictionary[packet.payload.roomName].remove(packet.payload.senderName)
 
-    def handlePacket(self, packet: ircPacket):
+    def handlePacket(self, packet: ircPacket, connection):
         # print(f"\npacket type: {type(packet)}\n")
 
         #register new client
         if(packet.header.opCode == ircOpcodes.IRC_OPCODE_REGISTER_CLIENT_REQ):
-            return self.registerClient(packet.payload)
+            return self.registerClient(packet.payload,connection)
             
         #list rooms request
         elif (packet.header.opCode == ircOpcodes.IRC_OPCODE_LIST_ROOMS_REQ):
@@ -251,6 +257,10 @@ class server:
         #send message
         elif(ircPacket.header.opCode == ircOpcodes.IRC_OPCODE_SEND_MSG_REQ):
            return self.sendMessageRequest(packet)
+
+        #private message
+
+        #broadcast message
 
 
 

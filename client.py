@@ -8,25 +8,43 @@ class client:
         self.name = name
         # key - senderName/roomName    value - list messages
         self.messageDictionary = dict()        
-        self.clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.currentRoom = ""
         self.serverPort = 6667
         self.serverIP = "127.0.0.1"
         self.buffSize = 4096
-
+        self.socketsList = [input, self.serverSocket]
 
     def initializeConnection(self):
-        self.clientSocket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+        self.serverSocket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
         try:
-            self.clientSocket.connect((self.serverIP, self.serverPort))
+            self.serverSocket.connect((self.serverIP, self.serverPort))
         except socket.error as e:
             print(str(e))
             
-        serverResponse = self.clientSocket.recv(self.buffSize)
+        try:
+            serverResponse = self.serverSocket.recv(self.buffSize)
+        except:
+            print("Sorry, it seems as though you have lost connection.\n")
+            print("We are ending the program. Please try reconnecting again.\n")
+            quit()
+
         byteStream = pickle.dumps(irc_protocol.ircPacket(irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_REGISTER_CLIENT_REQ, len(self.name)), self.name))
-        self.clientSocket.send(byteStream)
+
+        try:
+            self.serverSocket.send(byteStream)
+        except:
+            print("Sorry, it seems as though you have lost connection.\n")
+            print("We are ending the program. Please try reconnecting again.\n")
+            quit()
             
-        serverResponse = self.clientSocket.recv(self.buffSize)
+        try:
+            serverResponse = self.serverSocket.recv(self.buffSize)
+        except:
+            print("Sorry, it seems as though you have lost connection.\n")
+            print("We are ending the program. Please try reconnecting again.\n")
+            quit()
+
         formattedServerResponse = pickle.loads(serverResponse)
         if(formattedServerResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_REGISTER_CLIENT_RESP):
             print("Successfully joined server\n")
@@ -57,19 +75,46 @@ class client:
             self.messageDictionary[roomName] = receivedMessage
 
     def getAllRooms(self):
-       self.clientSocket.send(pickle.dumps(irc_protocol.ircPacket(irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_LIST_ROOMS_REQ, 0), "")))
-       serverResponse = pickle.loads(self.clientSocket.recv(self.buffSize))
-       if(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_LIST_ROOMS_RESP):
-           print("Here is a list of valid rooms: \n")
-           for room in serverResponse.payload:
-               print(f"Room Name: {room}\n")
-       else:
-           print("Sorry we have encountered an unexpected error and could not get a list of active rooms.\n")
-           print("Please try again later. \n")
+        try:
+            self.clientSocket.send(pickle.dumps(irc_protocol.ircPacket(irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_LIST_ROOMS_REQ, 0), "")))
+        except:
+            print("Sorry, it seems as though you have lost connection.\n")
+            print("We are ending the program. Please try reconnecting again.\n")
+            quit()
+
+        try:
+            serverResponse = pickle.loads(self.clientSocket.recv(self.buffSize))
+        except:
+            print("Sorry, it seems as though you have lost connection.\n")
+            print("We are ending the program. Please try reconnecting again.\n")
+            quit()
+
+        roomCount = 0
+        if(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_LIST_ROOMS_RESP):
+            roomCount += 1
+            print("Here is a list of valid rooms: \n")
+            for room in serverResponse.payload:
+                print(f"{roomCount}. Room Name: {room}\n")
+                roomCount += 1
+            return serverResponse.payload
+        else:
+            print("Sorry we have encountered an unexpected error and could not get a list of active rooms.\n")
+            print("Please try again later. \n")
 
     def getAllUsers(self):
-        self.clientSocket.send(pickle.dumps(irc_protocol.ircPacket(irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_LIST_USERS_REQ, 0), "")))
-        serverResponse = pickle.loads(self.clientSocket.recv(self.buffSize))
+        try:
+            self.clientSocket.send(pickle.dumps(irc_protocol.ircPacket(irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_LIST_USERS_REQ, 0), "")))
+        except:
+            print("Sorry, it seems as though you have lost connection.\n")
+            print("We are ending the program. Please try reconnecting again.\n")
+            quit()
+        try:
+            serverResponse = pickle.loads(self.clientSocket.recv(self.buffSize))
+        except:
+            print("Sorry, it seems as though you have lost connection.\n")
+            print("We are ending the program. Please try reconnecting again.\n")
+            quit()
+
         if(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_LIST_USERS_RESP):
             print("Here are all of the active users:")
             for user in serverResponse.payload:
@@ -84,8 +129,20 @@ class client:
         joinRoomPayload = irc_protocol.joinRoomPayload(self.name, desiredRoom)
         payloadLength = len(desiredRoom) + len(self.name)
         joinRoomHeader = irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_JOIN_ROOM_REQ, payloadLength)
-        self.clientSocket.send(pickle.dumps(irc_protocol.ircPacket(joinRoomHeader, joinRoomPayload)))
-        serverResponse = pickle.loads(self.clientSocket.recv(self.buffSize))
+
+        try:
+            self.clientSocket.send(pickle.dumps(irc_protocol.ircPacket(joinRoomHeader, joinRoomPayload)))
+        except:
+            print("Sorry, it seems as though you have lost connection.\n")
+            print("We are ending the program. Please try reconnecting again.\n")
+            quit()
+        
+        try:
+            serverResponse = pickle.loads(self.clientSocket.recv(self.buffSize))
+        except:
+            print("Sorry, it seems as though you have lost connection.\n")
+            print("We are ending the program. Please try reconnecting again.\n")
+            quit()
         
         #room successfully joined //not finished yet
         if(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_JOIN_ROOM_RESP):
@@ -126,6 +183,42 @@ class client:
         if desiredUser in self.messageDictionary.keys():
             self.currentRoom = desiredUser
     
+    def sendBroadcastMessage(self):
+        rooms = self.getAllRooms()
+        strDesiredRooms = input("Which room numbers would you like to join? Please enter as a space separated list of numbers: ")
+        indexDesiredRooms = int(strDesiredRooms.split(" "))
+        i = 0
+        numRooms = len(indexDesiredRooms)
+        while(i < numRooms):
+            indexDesiredRooms[i] -= 1
+            i += 1
+
+        desiredRooms = []
+        for index in indexDesiredRooms:
+            desiredRooms += rooms[index]
+
+        message = input("Please enter the message you wish to broadcast: ")
+        length = len(message) + len(desiredRooms) + len(self.name)
+        broadcastHeader = irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_SEND_BROADCAST_REQ, length)
+        broadcastPayload = irc_protocol.messagePayload(self.name, desiredRooms, message)
+        
+        try:
+            self.clientSocket.send(pickle.dumps(irc_protocol.ircPacket(broadcastHeader, broadcastPayload)))
+        except:
+            print("Sorry, it seems as though you have lost connection.\n")
+            print("We are ending the program. Please try reconnecting again.\n")
+            quit()
+
+        try:
+            serverResponse = pickle.loads(self.clientSocket.recv(self.buffSize))
+        except:
+            print("Sorry, it seems as though you have lost connection.\n")
+            print("We are ending the program. Please try reconnecting again.\n")
+            quit()
+
+
+        
+
     def handleInput(self):
         userDone = False
         while(userDone == False):
@@ -136,8 +229,19 @@ class client:
                 listUsersPayload = self.currentRoom
                 length = len(self.currentRoom)
                 listUsersHeader = irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_LIST_MEMBERS_OF_ROOM_REQ, length)
-                self.clientSocket.send(pickle.dump(irc_protocol.ircPacket(listUsersHeader, listUsersPayload)))
-                serverResponse = pickle.loads(self.clientSocket.recv(self.buffSize))
+                try:
+                    self.clientSocket.send(pickle.dump(irc_protocol.ircPacket(listUsersHeader, listUsersPayload)))
+                except:
+                    print("Sorry, it seems as though you have lost connection.\n")
+                    print("We are ending the program. Please try reconnecting again.\n")
+                    quit()
+                
+                try:
+                    serverResponse = pickle.loads(self.clientSocket.recv(self.buffSize))
+                except:
+                    print("Sorry, it seems as though you have lost connection.\n")
+                    print("We are ending the program. Please try reconnecting again.\n")
+                    quit()
 
                 if(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_LIST_MEMBERS_OF_ROOM_RESP):
                     print(f"Here are the current users in {self.currentRoom}: \n")
@@ -163,8 +267,15 @@ class client:
             #send private message
             elif(str.lower(userMessage == "-pm") or str.lower(userMessage == "-privatemessage")):
                 self.sendPrivateMessage()
+
+            #leave program
             elif(str.lower(userMessage == "-leave")):
                 self.leaveRoom()
+
+            #send broadcast message
+            elif(str.lower(userMessage == "-broadcast")):
+                self.sendBroadcastMessage()
+            
             #send message to room
             else:
                 self.sendMessage(userMessage)
@@ -175,11 +286,18 @@ class client:
         length = len(message) + len(self.name) + len(self.currentRoom)
         messageHeader = irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_SEND_MSG_REQ, length)
         messagePayload = irc_protocol.messagePayload(self.name, self.currentRoom, message)
-        self.clientSocket.send(pickle.dumps(irc_protocol.ircPacket(messageHeader, messagePayload)))
+        try:
+            self.clientSocket.send(pickle.dumps(irc_protocol.ircPacket(messageHeader, messagePayload)))
+        except:
+            print("Sorry, it seems as though you have lost connection.\n")
+            print("We are ending the program. Please try reconnecting again.\n")
+            quit()
         try:
             serverResponse = self.clientSocket.recv(self.buffSize)
         except:
-            print("Message could not be processed. Please try again later.\n")
+            print("Sorry, it seems as though you have lost connection.\n")
+            print("We are ending the program. Please try reconnecting again.\n")
+            quit()
         
 
     def sendPrivateMessage(self):
@@ -198,7 +316,13 @@ class client:
             length = len(desiredUser)
             privateMessageHeader = irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_START_PRIV_CHAT_REQ, length)
             privateMessagePayload = irc_protocol.messagePayload(self.name, desiredUser, "")
-            self.clientSocket.send(pickle.dumps(irc_protocol.ircPacket(privateMessageHeader, privateMessagePayload)))
+            try:
+                self.clientSocket.send(pickle.dumps(irc_protocol.ircPacket(privateMessageHeader, privateMessagePayload)))
+            except:
+                print("Sorry, it seems as though you have lost connection.\n")
+                print("We are ending the program. Please try reconnecting again.\n")
+                quit()
+
             try:
                 serverResponse = pickle.loads(self.clientSocket.revc(self.buffSize))
             except:
@@ -222,9 +346,14 @@ class client:
             length = len(self.currentRoom) + len(self.name)
             header = irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_LEAVE_ROOM_REQ, length)
             payload = irc_protocol.roomPayload(self.name, self.currentRoom)
-            self.clientSocket.send(pickle.dumps(irc_protocol.ircPacket(header, payload)))
-            self.messageDictionary.pop(self.currentRoom)
-            self.currentRoom = "Lobby"
+            try:
+                self.clientSocket.send(pickle.dumps(irc_protocol.ircPacket(header, payload)))
+                self.messageDictionary.pop(self.currentRoom)
+                self.currentRoom = "Lobby"
+            except:
+                print("Sorry, it seems as though you have lost connection.\n")
+                print("We are ending the program. Please try reconnecting again.\n")
+                quit()
             
 
     def listCommands(self):
@@ -246,8 +375,18 @@ class client:
         makeRoomRequestPacketHeader = irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_MAKE_ROOM_REQ, payloadLength)
         makeRoomRequestPacket = irc_protocol.ircPacket(makeRoomRequestPacketHeader, irc_protocol.joinRoomPayload(self.name, roomName))
 
-        self.clientSocket.send(pickle.dumps(makeRoomRequestPacket))
-        serverResponse = pickle.loads(self.clientSocket.recv(self.buffSize))
+        try:
+            self.clientSocket.send(pickle.dumps(makeRoomRequestPacket))
+        except:
+            print("Sorry, it seems as though you have lost connection.\n")
+            print("We are ending the program. Please try reconnecting again.\n")
+            quit()
+        try:
+            serverResponse = pickle.loads(self.clientSocket.recv(self.buffSize))
+        except:
+            print("Sorry, it seems as though you have lost connection.\n")
+            print("We are ending the program. Please try reconnecting again.\n")
+            quit()
         #print(serverResponse.decode('utf-8') + "\n")
         print(f"\ntype of server response: {type(serverResponse)}\n")
 

@@ -2,7 +2,5 @@ from client import *
 
 Tristan = client("Tristan")
 Tristan.initializeConnection()
-Tristan.getAllUsers()
-Tristan.makeRoom()
-Tristan.joinARoom()
+While(Tristan.)
 Tristan.clientSocket.close()
