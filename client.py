@@ -1,24 +1,29 @@
 
+from server import server
 import socket
 import irc_protocol
 import pickle
-
+from _thread import *
+import threading
 class client:
     def __init__(self, name):
         self.name = name
         # key - senderName/roomName    value - list messages
         self.messageDictionary = dict()        
-        self.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.currentRoom = ""
+        self.desiredRoom = ""
+        self.desiredUser = ""
         self.serverPort = 6667
         self.serverIP = "127.0.0.1"
         self.buffSize = 4096
-        self.socketsList = [input, self.serverSocket]
+        self.wantToQuit = False
+        self.mutex = threading.lock()
 
     def initializeConnection(self):
-        self.serverSocket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+        self.clientSocket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
         try:
-            self.serverSocket.connect((self.serverIP, self.serverPort))
+            self.clientSocket.connect((self.serverIP, self.serverPort))
         except socket.error as e:
             print(str(e))
             
@@ -50,29 +55,116 @@ class client:
             print("Successfully joined server\n")
             self.currentRoom = "Lobby"
             self.messageDictionary["Lobby"] = []
+
+            start_new_thread(self.handleIncoming())
+            while (not self.wantToQuit):
+                self.handleInput()
+
+            self.clientSocket.close()
             
         else:
             print("Couldn't join\n")
             print(f"{formattedServerResponse.header.opCode}\n")
         
+    def handleIncoming(self):
+        while self.wantToQuit == False:
+            serverResponse = pickle.loads(self.clientSocket.recv(self.buffSize))
+            self.receiveMessage(serverResponse)
 
-        #self.clientSocket.close()
+    def receiveMessage(self, serverResponse):
+        self.mutex.acquire()
+        # IRC_OPCODE_FORWARD_MESSAGE
+        if(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_FORWARD_MESSAGE):
+            self.messageDictionary[serverResponse.payload.message.receiverName] = serverResponse.payload.message.messageBody
 
-        # if(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_ERR_NAME_EXISTS):
-        #     print("Sorry, that name already exists. Please choose another one. \n")
-        #     return False
-        # elif(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_ERR_ILLEGAL_NAME):
-        #     print("Sorry, that name isn't valid. Please choose another one. \n")
-        #     return False
-        # else:
-        #     return True
-    
+        #IRC_OPCODE_SEND_BROADCAST_RESP 
+        if(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_SEND_BROADCASE_RESP):
+            for room in serverResponse.payload.message.receiverName:
+                self.messageDictionary[room] = serverResponse.payload.message.messageBody
 
-    def receiveMessage(self, roomName: str, receivedMessage):
-        if roomName in self.messageDictionary.keys():
-            self.messageDictionary[roomName].append(receivedMessage)
-        else: 
-            self.messageDictionary[roomName] = receivedMessage
+        #IRC_OPCODE_START_PRIV_CHAT_RESP
+        if(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_START_PRIV_CHAT_RESP):
+            print(f"You are now chatting with {self.desiredUser}")
+            self.currentRoom = "private " + self.desiredUser
+            self.messageDictionary[self.currentRoom] = []
+
+        #IRC_OPCODE_SEND_PRIV_MSG_RESP 
+        elif(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_SEND_PRIV_CHAT_RESP):
+           self.messageDictionary[serverResponse.payload.message.receiverName] = serverResponse.payload.message.messageBody
+
+        #IRC_OPCODE_LIST_MEMBERS_OF_ROOM_RESP 
+        elif(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_LIST_MEMBERS_OF_ROOM_RESP):
+            print(f"Here are the current users in {self.currentRoom}: \n")
+            for users in serverResponse.payload:
+                print(f"{users}\n")
+
+        #IRC_OPCODE_MAKE_ROOM_RESP
+        #room made successfully
+        elif(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_MAKE_ROOM_RESP):
+            print(f"{self.desiredRoom} was successfully created!\n")
+            self.currentRoom = self.desiredRoom
+            self.desiredRoom = ""
+
+        elif(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_FORWARD_PRIVATE_MESSAGE):
+            if serverResponse.payload.message.senderName in self.messageDictionary.keys():
+                self.messageDictionary[serverResponse.payload.message.senderName].append(serverResponse.payload.message.messageBody)
+            else:
+                self.messageDictionary[serverResponse.payload.message.senderName] = serverResponse.payload.message.messageBody
+
+        #room already exists
+        elif(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_ERR_ROOM_ALREADY_EXISTS):
+            print(f"{self.desiredRoom} already exists, so you have been added to it. Start chatting now\n")
+            self.currentRoom = self.desiredRoom
+            print(f"Welcome to {self.currentRoom}")
+            self.messageDictionary[self.currentRoom] = f"Welcome to {self.currentRoom}"
+
+        #IRC_OPCODE_SEND_MSG_RESP
+        elif(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_SEND_MSG_RESP):
+            self.messageDictionary[self.currentRoom].append("Me: " + serverResponse.payload.messageBody)
+
+        #IRC_OPCODE_JOIN_ROOM_RESP 
+        #room successfully joined 
+        if(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_JOIN_ROOM_RESP):
+            self.messageDictionary[self.desiredRoom] = []
+            self.currentRoom = self.desiredRoom
+            print(f"You have successfully joined {self.desiredRoom}!\nStart chatting now!\n")
+            self.desiredRoom = ""
+
+        #too many users in room
+        elif(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_ERR_TOO_MANY_USERS):
+            print(f"You cannot currently join {self.desiredRoom} because it is currently full.")
+            print("Please try again later.\n")
+            self.desiredRoom = ""
+        
+        #room doesn't exist
+        elif(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_ERR_ROOM_DOES_NOT_EXIST):
+            print(f"Sorry, but the room: {self.desiredRoom} doesn't exist. \n")
+            print("Please make a new room or try to join a different one.\n")
+            self.desiredRoom = ""
+
+        #already in room
+        elif(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_ERR_USER_ALREADY_IN_ROOM):
+            print(f"Silly goose! You are already in {self.desiredRoom}.\n")
+            print("Try the '-enterroom' or '-er' command.\n")
+            self.desiredRoom = ""
+
+        #IRC_OPCODE_LIST_USERS_RESP
+        elif(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_LIST_USERS_RESP):
+            print("Here are all of the active users:")
+            for user in serverResponse.payload:
+                print(f"\tUser: {user}")
+
+        #IRC_OPCODE_LIST_ROOMS_RESP
+        elif(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_LIST_ROOMS_RESP):
+            roomCount = 1
+            print("Here is a list of valid rooms: \n")
+            for room in serverResponse.payload:
+                print(f"{roomCount}. Room Name: {room}\n")
+                roomCount += 1
+            return serverResponse.payload
+
+        self.mutex.release()
+     
 
     def getAllRooms(self):
         try:
@@ -82,25 +174,6 @@ class client:
             print("We are ending the program. Please try reconnecting again.\n")
             quit()
 
-        try:
-            serverResponse = pickle.loads(self.clientSocket.recv(self.buffSize))
-        except:
-            print("Sorry, it seems as though you have lost connection.\n")
-            print("We are ending the program. Please try reconnecting again.\n")
-            quit()
-
-        roomCount = 0
-        if(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_LIST_ROOMS_RESP):
-            roomCount += 1
-            print("Here is a list of valid rooms: \n")
-            for room in serverResponse.payload:
-                print(f"{roomCount}. Room Name: {room}\n")
-                roomCount += 1
-            return serverResponse.payload
-        else:
-            print("Sorry we have encountered an unexpected error and could not get a list of active rooms.\n")
-            print("Please try again later. \n")
-
     def getAllUsers(self):
         try:
             self.clientSocket.send(pickle.dumps(irc_protocol.ircPacket(irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_LIST_USERS_REQ, 0), "")))
@@ -108,26 +181,14 @@ class client:
             print("Sorry, it seems as though you have lost connection.\n")
             print("We are ending the program. Please try reconnecting again.\n")
             quit()
-        try:
-            serverResponse = pickle.loads(self.clientSocket.recv(self.buffSize))
-        except:
-            print("Sorry, it seems as though you have lost connection.\n")
-            print("We are ending the program. Please try reconnecting again.\n")
-            quit()
 
-        if(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_LIST_USERS_RESP):
-            print("Here are all of the active users:")
-            for user in serverResponse.payload:
-                print(f"\tUser: {user}")
-        else:
-            print("Sorry, we are unable to get a list of users due to an unexpected error.\n")
-            print("Please try again later. \n")
+      
 
     def joinARoom(self):
         self.getAllRooms()
-        desiredRoom = input("What room do you wish to join?: ")
-        joinRoomPayload = irc_protocol.joinRoomPayload(self.name, desiredRoom)
-        payloadLength = len(desiredRoom) + len(self.name)
+        self.desiredRoom = input("What room do you wish to join?: ")
+        joinRoomPayload = irc_protocol.joinRoomPayload(self.name, self.desiredRoom)
+        payloadLength = len(self.desiredRoom) + len(self.name)
         joinRoomHeader = irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_JOIN_ROOM_REQ, payloadLength)
 
         try:
@@ -137,45 +198,15 @@ class client:
             print("We are ending the program. Please try reconnecting again.\n")
             quit()
         
-        try:
-            serverResponse = pickle.loads(self.clientSocket.recv(self.buffSize))
-        except:
-            print("Sorry, it seems as though you have lost connection.\n")
-            print("We are ending the program. Please try reconnecting again.\n")
-            quit()
         
-        #room successfully joined //not finished yet
-        if(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_JOIN_ROOM_RESP):
-            self.messageDictionary[desiredRoom] = []
-            self.currentRoom = desiredRoom
-            print(f"You have successfully joined {desiredRoom}!\nStart chatting now!\n")
-
-        #too many users in room
-        elif(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_ERR_TOO_MANY_USERS):
-            print(f"You cannot currently join {desiredRoom} because it is currently full.")
-            print("Please try again later.\n")
-        
-        #room doesn't exist
-        elif(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_ERR_ROOM_DOES_NOT_EXIST):
-            print(f"Sorry, but the room: {desiredRoom} doesn't exist. \n")
-            print("Please make a new room or try to join a different one.\n")
-
-        #already in room
-        elif(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_ERR_USER_ALREADY_IN_ROOM):
-            print(f"Silly goose! You are already in {desiredRoom}.\n")
-            print("Try the '-enterroom' or '-er' command.\n")
-
-        #unexpected error code
-        else:
-            print("{Insert Scary Warning Message Here} ... just kidding\n")
-            print("We somehow received an error that we didn't expect!\n")
-            print("Please try again later.\n")
 
     def enterRoom(self):
-        desiredRoom = input("What room would you like to enter?: ")
-        if desiredRoom in self.messageDictionary.keys():
-            self.currentRoom = desiredRoom
+        self.desiredRoom = input("What room would you like to enter?: ")
+        if self.desiredRoom in self.messageDictionary.keys():
+            self.currentRoom = self.desiredRoom
+            self.mutex.acquire()
             self.showCurrentRoomMessages()
+            self.mutex.release()
         else:
             print("Sorry that room either doesn't exist or you have not joined it yet.\n")
 
@@ -209,15 +240,6 @@ class client:
             print("We are ending the program. Please try reconnecting again.\n")
             quit()
 
-        try:
-            serverResponse = pickle.loads(self.clientSocket.recv(self.buffSize))
-        except:
-            print("Sorry, it seems as though you have lost connection.\n")
-            print("We are ending the program. Please try reconnecting again.\n")
-            quit()
-
-
-        
 
     def handleInput(self):
         userDone = False
@@ -225,6 +247,7 @@ class client:
             userMessage = input("Message: ")
             if(str.lower(userMessage) == "-quit" or  str.lower(userMessage) == "-q"):
                 userDone = True
+                self.wantToQuit = True
             elif(str.lower(userMessage) == "-listusers" or str.lower(userMessage) == "-lu"):
                 listUsersPayload = self.currentRoom
                 length = len(self.currentRoom)
@@ -235,21 +258,6 @@ class client:
                     print("Sorry, it seems as though you have lost connection.\n")
                     print("We are ending the program. Please try reconnecting again.\n")
                     quit()
-                
-                try:
-                    serverResponse = pickle.loads(self.clientSocket.recv(self.buffSize))
-                except:
-                    print("Sorry, it seems as though you have lost connection.\n")
-                    print("We are ending the program. Please try reconnecting again.\n")
-                    quit()
-
-                if(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_LIST_MEMBERS_OF_ROOM_RESP):
-                    print(f"Here are the current users in {self.currentRoom}: \n")
-                    for users in serverResponse.payload:
-                        print(f"{users}\n")
-                else:
-                    print(f"We were unable to get the users of the room because it does not exist anymore. \n")
-
             elif(str.lower(userMessage) == "-help"):
                 self.listCommands()
             elif(str.lower(userMessage) == "-makeroom"): # -makeroom lydiaroom
@@ -268,14 +276,14 @@ class client:
             elif(str.lower(userMessage == "-pm") or str.lower(userMessage == "-privatemessage")):
                 self.sendPrivateMessage()
 
-            #leave program
+            #leave room
             elif(str.lower(userMessage == "-leave")):
                 self.leaveRoom()
 
             #send broadcast message
             elif(str.lower(userMessage == "-broadcast")):
                 self.sendBroadcastMessage()
-            
+          
             #send message to room
             else:
                 self.sendMessage(userMessage)
@@ -284,7 +292,10 @@ class client:
     def sendMessage(self, userMessage):
         message = userMessage
         length = len(message) + len(self.name) + len(self.currentRoom)
-        messageHeader = irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_SEND_MSG_REQ, length)
+        if "private: " in self.currentRoom:
+            messageHeader = irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_SEND_PRIV_MSG_REQ)
+        else:
+            messageHeader = irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_SEND_MSG_REQ, length)
         messagePayload = irc_protocol.messagePayload(self.name, self.currentRoom, message)
         try:
             self.clientSocket.send(pickle.dumps(irc_protocol.ircPacket(messageHeader, messagePayload)))
@@ -292,30 +303,26 @@ class client:
             print("Sorry, it seems as though you have lost connection.\n")
             print("We are ending the program. Please try reconnecting again.\n")
             quit()
-        try:
-            serverResponse = self.clientSocket.recv(self.buffSize)
-        except:
-            print("Sorry, it seems as though you have lost connection.\n")
-            print("We are ending the program. Please try reconnecting again.\n")
-            quit()
+
+        
         
 
     def sendPrivateMessage(self):
-        desiredUser = input("Who would you like to private message with?: ")
+        self.desiredUser = input("Who would you like to private message with?: ")
         print("\n")
 
         #look to see if private chat thread exists
-        if f"private {desiredUser}" in self.messageDictionary.keys():
-            privateMessageRecipient = "private " + desiredUser
+        if f"private {self.desiredUser}" in self.messageDictionary.keys():
+            privateMessageRecipient = "private " + self.desiredUser
             self.enterPrivateChat(privateMessageRecipient)
-            print(f"You are now chatting with {desiredUser}")
+            print(f"You are now chatting with {self.desiredUser}")
             self.showCurrentRoomMessages()
 
         #start new chat thread
         else:
-            length = len(desiredUser)
+            length = len("private: " + self.desiredUser)
             privateMessageHeader = irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_START_PRIV_CHAT_REQ, length)
-            privateMessagePayload = irc_protocol.messagePayload(self.name, desiredUser, "")
+            privateMessagePayload = irc_protocol.messagePayload(self.name, "private: " + self.desiredUser, "")
             try:
                 self.clientSocket.send(pickle.dumps(irc_protocol.ircPacket(privateMessageHeader, privateMessagePayload)))
             except:
@@ -323,16 +330,6 @@ class client:
                 print("We are ending the program. Please try reconnecting again.\n")
                 quit()
 
-            try:
-                serverResponse = pickle.loads(self.clientSocket.revc(self.buffSize))
-            except:
-                print("Unexpected server error. We apologize, but we must end the program")
-                quit()
-            
-            if(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_START_PRIV_CHAT_RESP):
-                print(f"You are now chatting with {desiredUser}")
-                self.currentRoom = "private " + desiredUser
-                self.messageDictionary[self.currentRoom] = []
 
     def showCurrentRoomMessages(self):
         print(f"Room: {self.currentRoom}")
@@ -370,10 +367,10 @@ class client:
         print("'-exit' will end the program. \n")
 
     def makeRoom(self):
-        roomName = input("What would you like your room to be called: ")
-        payloadLength = len(roomName) + len(self.name)
+        self.desiredRoom = input("What would you like your room to be called: ")
+        payloadLength = len(self.desiredRoom) + len(self.name)
         makeRoomRequestPacketHeader = irc_protocol.ircHeader(irc_protocol.ircOpcodes.IRC_OPCODE_MAKE_ROOM_REQ, payloadLength)
-        makeRoomRequestPacket = irc_protocol.ircPacket(makeRoomRequestPacketHeader, irc_protocol.joinRoomPayload(self.name, roomName))
+        makeRoomRequestPacket = irc_protocol.ircPacket(makeRoomRequestPacketHeader, irc_protocol.joinRoomPayload(self.name, self.desiredRoom))
 
         try:
             self.clientSocket.send(pickle.dumps(makeRoomRequestPacket))
@@ -381,38 +378,7 @@ class client:
             print("Sorry, it seems as though you have lost connection.\n")
             print("We are ending the program. Please try reconnecting again.\n")
             quit()
-        try:
-            serverResponse = pickle.loads(self.clientSocket.recv(self.buffSize))
-        except:
-            print("Sorry, it seems as though you have lost connection.\n")
-            print("We are ending the program. Please try reconnecting again.\n")
-            quit()
-        #print(serverResponse.decode('utf-8') + "\n")
-        print(f"\ntype of server response: {type(serverResponse)}\n")
 
-        #room made successfully
-        if(serverResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_MAKE_ROOM_RESP):
-            print(f"{roomName} was successfully created!\n")
-            print("Enter the room to begin chatting!\n")
 
-        #room already exists
-        else:
-            #change state to be in new room???????
-            print("Success! You're room was able to be created.\n")
-            print(f"Welcome to {roomName}")
-            self.messageDictionary[roomName] = f"Welcome to {roomName}"
-            self.currentRoom = roomName
-
-        #Too many rooms already exist
-
-        #Illegal name
-
-        #Illegal Name length
-
-        #generic unexpected error
-            
-        
-
-    
 
 

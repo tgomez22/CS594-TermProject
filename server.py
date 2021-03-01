@@ -2,12 +2,8 @@ import socket
 import pickle
 from irc_protocol import *
 from _thread import *
+import threading
 
-#TODO 
-class room:
-    def __init__(self, name, clients):
-        self.name = name
-        self.clients = clients #list of clients
 class server:
     
     def __init__(self):
@@ -24,6 +20,7 @@ class server:
                             #socket.create_server((host, port)) 
         self.threadCount = 0
         self.buffSize = 4096
+        self.mutex = threading.lock()
         
     def threadedClient(self, connection, address):
         connection.send(str.encode('Welcome to Tristan and Lydia\'s IRC Server!\n'))
@@ -33,6 +30,11 @@ class server:
                 data = connection.recv(self.buffSize)
                 # print(f"\ntype of data: {type(data)}\n")
             except:
+                self.mutex.acquire()
+                for key,value in self.clientDictionary.items():
+                    if value == connection:
+                        self.clientDictionary.pop(key)
+                self.mutext.release()
                 print("Cannot receive data")
                 break
             if not data:
@@ -40,15 +42,16 @@ class server:
 
             clientRequestPacket = pickle.loads(data)
 
-            # print(f"\ntype of unpickled data: {type(clientRequestPacket)}\n")
+          
             responsePacket = self.handlePacket(clientRequestPacket, connection)
+            
             #TODO check if error message should result in server force closing a connection
                 #if it should force close, send message to client stating why force closing
                 # then do force close
             try:
                 connection.send(pickle.dumps(responsePacket))
             except:
-                print("cannot send data")
+                print("Cannot send data")
                 break
         connection.close()
         print(f"Conneciton closed on address {address}")
@@ -68,8 +71,6 @@ class server:
             client, address = self.serverSocket.accept()
             
             print(f'Connected to: {address[0]}: {str(address[1])}')
-            
-         
             self.threadCount += 1
 
             print(f'Thread Number: {str(self.threadCount)}')
@@ -94,11 +95,15 @@ class server:
         if newClient in self.clientList:
             return ircOpcodes.IRC_ERR_NAME_EXISTS
         else:  
+            self.mutex.acquire()
             self.clientList[newClient] = connection
             self.roomDictionary["Lobby"].append(newClient)
+            self.mutex.release()
+
             return ircOpcodes.IRC_OPCODE_REGISTER_CLIENT_RESP
 
     def addClientToRoom(self, requestingClient, requestedRoom):
+        self.mustex.acquire()
         #if client exists
         if requestingClient in self.clientList:
 
@@ -111,66 +116,44 @@ class server:
                     #if room can handle more users 
                     if(len(self.roomDictionary[requestedRoom]) < 100):
                         self.roomDictionary[requestedRoom].append(requestingClient)
+                        self.mutex.release()
                         return ircPacket(ircHeader(ircOpcodes.IRC_OPCODE_JOIN_ROOM_RESP, 0), "")
 
                     #if room is full
                     else:
+                        self.mutex.release()
                         return ircPacket(ircHeader(ircOpcodes.IRC_ERR_TOO_MANY_USERS, 0), "")
 
                 #client IS in room
                 else:
+                    self.mutex.release()
                     return ircPacket(ircHeader(ircOpcodes.IRC_ERR_USER_ALREADY_IN_ROOM, 0), "")
                     
             #room doesn't exist
             else:
+                self.mutex.release()
                 return ircPacket(ircHeader(ircOpcodes.IRC_ERR_ROOM_DOES_NOT_EXIST, 0), "") 
         
         else: 
+            self.mutex.release()
             #do we need CLOSE CONNECTION functionality here???
             return ircPacket(ircHeader(ircOpcodes.IRC_ERR, 0), "")
 
-
-    # def sendMessageToClient(self, sendingClient:client, receivingClient:client, message):
-       # if (self. checkIfClientExists(self, receivingClient) == True):
-            # send message to receivingClient from sendingClient
-        #else:
-            # send IRC_ERR_RECIPIENT_DOES_NOT_EXIST
-            
-            
-    def registerRoom(self, newRoom:room, requestingClient):
-        if newRoom in self.roomDictionary.keys():
-            #send room already exists Erno to user. IRC_ERR_ROOM_ALREADY_EXIST
-            return
-        else: 
-            self.roomDictionary[newRoom.name] = newRoom
-
-        
-    # def sendRoomsForClient(self, requestingClient):
-    #     roomList = []
-    #     for roomName in self.roomDictionary.keys():
-    #         if requestingClient in roomDictionary[roomName].values():
-    #             roomList.append(room.)
-        # TODO search client list for each room, and return list of rooms for client
-
-
-    # def sendMessageToRoom(self, sendingClient, roomName:room, message):
-    #     if roomName in self.roomDictionary.keys():
-    #         #send message to self.roomDictionary.name from sendingClient
-    #     else:
-            # send IRC_ERR_RECIPIENT_DOES_NOT_EXIST
     def makeNewRoom(self, packet):
+        newRoom = packet.payload.roomName
         #room exits return err
-        if packet.payload.roomName in self.roomDictionary.keys():
+        self.mutex.acquire()
+        if newRoom in self.roomDictionary.keys():
+            self.mutex.release()
             return ircOpcodes.IRC_ERR_ROOM_ALREADY_EXISTS
         #illegal room name, return err
-        elif(len(packet.payload.roomName) < 1 or len(packet.payload.roomName) > 32 or packet.payload.roomName.startswith(' ') or packet.payload.roomName.endswith(' ')):
+        elif not self.isNameLegal(newRoom):
+            self.mutex.release()
             return ircOpcodes.IRC_ERR_ILLEGAL_NAME
-        for letter in packet.payload.roomName:
-            if(ord(letter) < 32 or ord(letter) > 126):
-                return ircOpcodes.IRC_ERR_ILLEGAL_NAME
         #valid room name, create room
         else:
             self.roomDictionary[packet.payload.roomName] = [packet.payload.senderName]
+            self.mutex.release()
             return ircOpcodes.IRC_OPCODE_MAKE_ROOM_RESP
 
     def forwardMessageToRoom(self, packet:ircPacket):
@@ -187,8 +170,13 @@ class server:
 
         forwardHeader = ircHeader(ircOpcodes.IRC_OPCODE_FORWARD_MESSAGE, payloadLength)
         forwardPacket = ircPacket(forwardHeader, ircPacket.payload)
-        
-        self.clientDictionary[receiverName].send(pickle.dumps(forwardPacket))
+        try:
+            self.mutex.acquire()
+            self.clientDictionary[receiverName].send(pickle.dumps(forwardPacket))
+            self.mutex.release()
+        except socket.error as e:
+            print(str(e))
+
 
 
     # packet should have payload with messagePayload that contains a message object
@@ -196,25 +184,34 @@ class server:
         if packet.payload.receiverName not in self.clientList:
             if packet.payload.receiverName not in self.roomDictionary.keys():
                 return ircOpcodes.IRC_ERR_ROOM_DOES_NOT_EXIST
-            return ircOpcodes.IRC_ERR_RECIPIENT_DOES_NOT_EXIST
+            return ircPacket(ircHeader(ircOpcodes.IRC_ERR_RECIPIENT_DOES_NOT_EXIST,0),"")
         else:
-            Thread(target=self.forwardMessage,
-            args=(self, packet)).start()
-            return ircOpcodes.IRC_OPCODE_SEND_MSG_RESP
+            #TODO make new thread
+            start_new_thread(self.fowardMessageToClient, (packet, ))
+            messageLen = len(packet.payload.message.messageBody)
+            recipientNameLength = len(packet.payload.receiverName)
+            senderNameLength = len(packet.payload.message.senderName)
+            packetLength = messageLen + recipientNameLength + senderNameLength
+            return ircPacket(ircHeader(ircOpcodes.IRC_OPCODE_SEND_MSG_RESP, packetLength), packet.payload)
 
     def getMembersOfSpecificRoom(self, desiredRoom):
+        self.mutex.acquire()
         if desiredRoom not in self.roomDictionary.keys():
+            self.mutex.release()
             return ircPacket(ircHeader(ircOpcodes.IRC_ERR_ROOM_DOES_NOT_EXIST), "")
         else:
             responsePayload = list(self.roomDictionary[desiredRoom].keys())
             responseLength = 0
             for user in responsePayload:
                 responseLength += len(user)
+            self.mutex.release()
             return ircPacket(ircHeader(ircOpcodes.IRC_OPCODE_LIST_MEMBERS_OF_ROOM_RESP, responseLength), responsePayload)
 
     def removeSpecificUserFromRoom(self, packet):
+        self.mutex.acquire()
         if packet.payload.senderName in self.roomDictionary[packet.payload.roomName]:
             self.roomDictionary[packet.payload.roomName].remove(packet.payload.senderName)
+        self.mutex.release()
 
     def handlePacket(self, packet: ircPacket, connection):
         # print(f"\npacket type: {type(packet)}\n")
@@ -256,6 +253,7 @@ class server:
 
         #send message
         elif(ircPacket.header.opCode == ircOpcodes.IRC_OPCODE_SEND_MSG_REQ):
+
            return self.sendMessageRequest(packet)
 
         #private message
