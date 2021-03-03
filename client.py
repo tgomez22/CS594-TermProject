@@ -54,13 +54,14 @@ class client:
         formattedServerResponse = pickle.loads(serverResponse)
         if(formattedServerResponse.header.opCode == irc_protocol.ircOpcodes.IRC_OPCODE_REGISTER_CLIENT_RESP):
             print("Successfully joined server\n")
+            
             self.currentRoom = "Lobby"
             self.messageDictionary["Lobby"] = []
 
-            start_new_thread(self.handleIncoming())
-            while (not self.wantToQuit):
+            start_new_thread(self.handleIncoming, () )
+            while (self.wantToQuit == False):
                 self.handleInput()
-            if(self.wantToQuit):
+            if(self.wantToQuit == True):
                 self.clientSocket.close()
 
         else:

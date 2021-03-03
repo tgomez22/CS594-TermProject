@@ -88,12 +88,12 @@ class server:
 
     def registerClient(self, newClient, connection):
         # check if legal name
-        print(f"checking if {newClient} is a legal name")
+        print(f"\nChecking if {newClient} is a legal name...")
         if not self.isNameLegal(newClient):
             print(f"ERROR: name contains illegal characters: {newClient}")
             return ircOpcodes.IRC_ERR_ILLEGAL_NAME
 
-        print(f"checking if {newClient} is already taken name")
+        print(f"Checking if {newClient} is already taken name...")
         self.mutex.acquire()
         if newClient in list(self.clientDictionary.keys()):
             print(f"ERROR: Name already taken: {newClient} ")
@@ -102,7 +102,15 @@ class server:
         else:
             print(f"Client being added to server with name:{newClient}")
             self.clientDictionary[newClient] = connection
+
+            print(f"\nList of all clients connected")
+            for client in list(self.clientDictionary.keys()):
+                print(f"  - {client}")
+
+            print("\nList of clients currently in Lobby:")
             self.roomDictionary["Lobby"].append(newClient)
+            for client in list(self.roomDictionary["Lobby"]):
+                print(f" - {client}")
             self.mutex.release()
 
             return ircOpcodes.IRC_OPCODE_REGISTER_CLIENT_RESP
