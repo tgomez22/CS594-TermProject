@@ -7,8 +7,8 @@ class message:
         self.messageBody = messageBody
     
     def display(self):
-        print(f"From {self.senderName}:\n")
-        print(f"{self.messageBody}\n")
+        print(f"From {self.senderName}: {self.messageBody}")
+        
 
 #client to server
 class messagePayload:
@@ -47,7 +47,7 @@ class ircOpcodes(Enum):
     IRC_OPCODE_START_PRIV_CHAT_REQ = 1009
     IRC_OPCODE_SEND_BROADCAST_REQ = 1010
     IRC_OPCODE_LEAVE_ROOM_REQ = 1011
-  
+    IRC_OPCODE_CLIENT_QUIT_MSG = 1012
     
     IRC_OPCODE_REGISTER_CLIENT_RESP = 2000
     IRC_OPCODE_SERVER_KEEPALIVE = 2001
@@ -59,7 +59,7 @@ class ircOpcodes(Enum):
     IRC_OPCODE_LIST_MEMBERS_OF_ROOM_RESP = 2007
     IRC_OPCODE_SEND_PRIV_MSG_RESP = 2008
     IRC_OPCODE_START_PRIV_CHAT_RESP = 2009
-    IRC_OPCODE_SEND_BROADCASE_RESP = 2010
+    IRC_OPCODE_SEND_BROADCAST_RESP = 2010
     IRC_OPCODE_FORWARD_MESSAGE = 2011
     IRC_OPCODE_FORWARD_PRIVATE_MESSAGE = 2012
 
