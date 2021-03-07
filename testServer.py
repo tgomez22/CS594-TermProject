@@ -1,4 +1,4 @@
 import server
 
-testServer = server()
+testServer = server.server()
 testServer.startServer()

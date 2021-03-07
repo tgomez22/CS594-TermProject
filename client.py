@@ -107,6 +107,10 @@ class client:
             print(
                 f"Sorry, but {self.name} cannot be used because it is invalid. Please enter a new name.")
             return False
+        elif(formattedServerResponse.header.opCode == ircOpcodes.ERR_ILLEGAL_NAME_LENGTH):
+            print(
+                f"Sorry but {self.name} is too long, please try again with a new name.")
+            return False
         elif(formattedServerResponse.header.opCode == ircOpcodes.ERR_NAME_EXISTS):
             print(
                 f"Sorry, but {self.name} already exists. Please enter a new name.")
@@ -150,7 +154,7 @@ class client:
         # SEND_BROADCAST_RESP
         # This method updates the sending client's message dictionary for a broadcast message
         # for each successful message sent, adding those messages to their corresponding room.
-        if(serverResponse.header.opCode == ircOpcodes.SEND_BROADCAST_RESP):
+        elif(serverResponse.header.opCode == ircOpcodes.SEND_BROADCAST_RESP):
             self.mutex.acquire()
             for room in serverResponse.payload.message.receiverName:
                 self.messageDictionary[room].append(
@@ -161,7 +165,7 @@ class client:
         # The sending client has recieved a response that they are able to initiate
         # a private chat with the requested client. This adds a new private chat room for
         # the sending client.
-        if(serverResponse.header.opCode == ircOpcodes.START_PRIV_CHAT_RESP):
+        elif(serverResponse.header.opCode == ircOpcodes.START_PRIV_CHAT_RESP):
             self.mutex.acquire()
             print(f"You are now chatting with {self.desiredUser}")
             self.currentRoom = "private: " + self.desiredUser
@@ -171,7 +175,7 @@ class client:
         # SEND_PRIV_MSG_RESP
         # The sending client was successfully able to send a private message to another client.
         # This updates the sender's private message chat thread with the sent message.
-        if(serverResponse.header.opCode == ircOpcodes.SEND_PRIV_MSG_RESP):
+        elif(serverResponse.header.opCode == ircOpcodes.SEND_PRIV_MSG_RESP):
             self.mutex.acquire()
             privRoomName = "private: " + self.desiredUser
             self.messageDictionary[privRoomName].append(
@@ -182,7 +186,7 @@ class client:
         # The sending client was successfully able to request a list of active clients
         # who are currently in the same room as the requesting client. The list gets
         # replaced with an updated one with every call to this method.
-        if(serverResponse.header.opCode == ircOpcodes.LIST_MEMBERS_OF_ROOM_RESP):
+        elif(serverResponse.header.opCode == ircOpcodes.LIST_MEMBERS_OF_ROOM_RESP):
             self.mutex.acquire()
             self.currentRoomUsers = serverResponse.payload
             self.mutex.release()
@@ -190,7 +194,7 @@ class client:
         # MAKE_ROOM_RESP
         # room made successfully and the user is added to that room
         # a new entry in the message dictionary is added for the new room.
-        if(serverResponse.header.opCode == ircOpcodes.MAKE_ROOM_RESP):
+        elif(serverResponse.header.opCode == ircOpcodes.MAKE_ROOM_RESP):
             self.mutex.acquire()
             self.currentRoom = self.desiredRoom
             self.messageDictionary[self.currentRoom] = []
@@ -199,7 +203,7 @@ class client:
         # A client has received a private message. If the private chat thread already exists then the message
         # is appended to the corresponding entry in the message dictionary. If the chat thread does not exist then
         # a new entry is created in the message dictionary.
-        if(serverResponse.header.opCode == ircOpcodes.FORWARD_PRIVATE_MESSAGE):
+        elif(serverResponse.header.opCode == ircOpcodes.FORWARD_PRIVATE_MESSAGE):
             self.mutex.acquire()
             if "private: " + serverResponse.payload.message.senderName in list(self.messageDictionary.keys()):
                 self.messageDictionary["private: " + serverResponse.payload.message.senderName].append(
@@ -211,7 +215,7 @@ class client:
 
         # A client attempted to create a room that already exists.
         # The room is not recreated, and the client is told that they can join it.
-        if(serverResponse.header.opCode == ircOpcodes.ERR_ROOM_ALREADY_EXISTS):
+        elif(serverResponse.header.opCode == ircOpcodes.ERR_ROOM_ALREADY_EXISTS):
             self.mutex.acquire()
             print(f"{self.desiredRoom} already exists, you may choose to join it.\n")
             self.mutex.release()
@@ -219,7 +223,7 @@ class client:
         # SEND_MSG_RESP
         # A client was able to successfully send a message to a room.
         # The message they sent is automatically appended to that rooms message dictionary entry.
-        if(serverResponse.header.opCode == ircOpcodes.SEND_MSG_RESP):
+        elif(serverResponse.header.opCode == ircOpcodes.SEND_MSG_RESP):
             self.mutex.acquire()
             self.messageDictionary[self.currentRoom].append(
                 "Me: " + serverResponse.payload.message.messageBody)
@@ -229,7 +233,7 @@ class client:
         # Client was able to successfully join their desired room.
         # a new entry in the message dictionary is made for that room and
         # the user is told of the success
-        if(serverResponse.header.opCode == ircOpcodes.IRC_OPCODE_JOIN_ROOM_RESP):
+        elif(serverResponse.header.opCode == ircOpcodes.IRC_OPCODE_JOIN_ROOM_RESP):
             self.mutex.acquire()
             for room in serverResponse.payload:
                 if room not in self.messageDictionary.keys():
@@ -239,7 +243,7 @@ class client:
 
         # too many users in room
         # client is told that they cannot enter a room since it is full
-        if(serverResponse.header.opCode == ircOpcodes.ERR_TOO_MANY_USERS):
+        elif(serverResponse.header.opCode == ircOpcodes.ERR_TOO_MANY_USERS):
             self.mutex.acquire()
             print(
                 f"You cannot currently join {self.desiredRoom} because it is currently full.")
@@ -249,7 +253,7 @@ class client:
         # room doesn't exist
         # client requested to join a room that doesn't exist. Error message
         # is given to client
-        if(serverResponse.header.opCode == ircOpcodes.ROOM_DOES_NOT_EXIST):
+        elif(serverResponse.header.opCode == ircOpcodes.ROOM_DOES_NOT_EXIST):
             self.mutex.acquire()
             print(f"Sorry, but the room: {self.desiredRoom} doesn't exist. \n")
             print("Please make a new room or try to join a different one.\n")
@@ -258,7 +262,7 @@ class client:
         #already in room
         # user tried to join a chat room they are already in.
         # User is prompted to change into it.
-        if(serverResponse.header.opCode == ircOpcodes.ERR_USER_ALREADY_IN_ROOM):
+        elif(serverResponse.header.opCode == ircOpcodes.ERR_USER_ALREADY_IN_ROOM):
             self.mutex.acquire()
             print(f"Silly goose! You are already in {self.desiredRoom}.\n")
             print("Try the '-changeroom' or '-cr' command.\n")
@@ -267,7 +271,7 @@ class client:
         # LIST_USERS_RESP
         # Client requested all known users which are connected to the server
         # the list of all known clients is added to requesting client's state
-        if(serverResponse.header.opCode == ircOpcodes.LIST_USERS_RESP):
+        elif(serverResponse.header.opCode == ircOpcodes.LIST_USERS_RESP):
             self.mutex.acquire()
             self.knownUsers = serverResponse.payload
             self.mutex.release()
@@ -275,10 +279,39 @@ class client:
         # LIST_ROOMS_RESP
         # client requested a list of all chat rooms on the server.
         # server returns the list of all chat rooms and client updates its state
-        if(serverResponse.header.opCode == ircOpcodes.LIST_ROOMS_RESP):
+        elif(serverResponse.header.opCode == ircOpcodes.LIST_ROOMS_RESP):
             self.mutex.acquire()
             self.knownRooms = serverResponse.payload
             self.mutex.release()
+
+        # Client attempted to make a room that has an illegal character in it, or it
+        # begins/ends with a space character.
+        elif(serverResponse.header.opCode == ircOpcodes.ERR_ILLEGAL_NAME):
+            print(
+                f"Sorry but {self.desiredRoom} is not a valid name. Please try making a new room with a different name.")
+
+        # Client attempted to make a room using a name that is longer than 32 chars or has a length of 0.
+        elif(serverResponse.header.opCode == ircOpcodes.ERR_ILLEGAL_ROOM_NAME_LENGTH):
+            print(
+                f"Sorry but {self.desiredRoom} is too long of a name. Please try making a room with a shorter name.")
+
+        # Client attempted to send a message longer than 140 characters.
+        elif(serverResponse.header.opCode == ircOpcodes.ERR_ILLEGAL_MESSAGE_LENGTH):
+            print(
+                "Sorry but the message you tried to send is too long. Keep it 140 characters or less.")
+
+        # generic unexpected error. Not recoverable.
+        elif(serverResponse.header.opCOde == ircOpcodes.IRC_ERR):
+            print(
+                "Sorry, an unexpected error has occurred and the program is now exiting.")
+            quit()
+
+            # Nothing should be able to reach this statement. This is probably
+            # a catastropic error, so exit program.
+        else:
+            print(
+                "Sorry, an unexpected error has occurred and the program is now exiting.")
+            quit()
 
     def getAllRooms(self):
         """This method sends a request to the server asking it for a list of all public rooms that the server is

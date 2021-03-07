@@ -7,42 +7,47 @@ from enum import Enum
 
 class message:
     """Contents of a message sent from one client and received by another"""
-    
-    def __init__( self, senderName:str, messageBody:str):
+
+    def __init__(self, senderName: str, messageBody: str):
         """Create a message."""
         self.senderName = senderName
         self.messageBody = messageBody
-    
-        
 
-#client to server
+
+# client to server
 class messagePayload:
     """A specific payload to be passed in with an ircPacket used when
     exchanging messages.
     """
-    def __init__(self, senderName: str, receiverName, messageBody:str):
+
+    def __init__(self, senderName: str, receiverName, messageBody: str):
         """Make a messagePayload"""
         self.receiverName = receiverName
         self.message = message(senderName, messageBody)
-        
+
 
 class roomPayload:
     """
     A specific payload for creating and joining rooms.
     """
+
     def __init__(self, senderName: str, roomName: str):
         """Create a roomPayload"""
         self.senderName = senderName
         self.roomName = roomName
 
+
 class ircHeader:
     """Header information to be used by """
+
     def __init__(self, opCode: int, payloadLength: int):
         self.opCode = opCode
         self.payloadLength = payloadLength
 
+
 class ircPacket:
     """ircPackets contain encapsulated data to be consumed by client and server."""
+
     def __init__(self, header: ircHeader, payload):
         self.header = header
         # self.opcode
@@ -52,13 +57,13 @@ class ircPacket:
 
 class ircOpcodes(Enum):
     """Contains all of the opcodes (constant integers) to determin what action is taken on an ircPacket."""
-    CLIENT_KEEPALIVE = 1001 #NOTE NOT USED
-    SERVER_KEEPALIVE = 2001 #NOTE NOT USED
-    ERR_ILLEGAL_LENGTH = 3002 #NOTE NOT USED
-    ERR_ILLEGAL_OPCODE = 3003 #NOTE NOT USED
-    ERR_ILLEGAL_MESSAGE = 3005 #NOTE NOT USED
-    ERR_TOO_MANY_ROOMS = 3007 #NOTE NOT USED
-    ERR_TIMEOUT = 3009 #NOTE NOT USED
+    CLIENT_KEEPALIVE = 1001  # NOTE NOT USED
+    SERVER_KEEPALIVE = 2001  # NOTE NOT USED
+    ERR_ILLEGAL_LENGTH = 3002  # NOTE NOT USED
+    ERR_ILLEGAL_OPCODE = 3003  # NOTE NOT USED
+    ERR_ILLEGAL_MESSAGE = 3005  # NOTE NOT USED
+    ERR_TOO_MANY_ROOMS = 3007  # NOTE NOT USED
+    ERR_TIMEOUT = 3009  # NOTE NOT USED
 
     REGISTER_CLIENT_REQ = 1000
     """Sent from Client to Server, opcode to request connection."""
@@ -84,7 +89,7 @@ class ircOpcodes(Enum):
     """Sent from client to server, request to leave a room on the server."""
     CLIENT_QUIT_MSG = 1012
     """Sent from client to server, request close the connection on the server."""
-    
+
     REGISTER_CLIENT_RESP = 2000
     """Sent from server to client, success response to client request to connect to the server."""
     LIST_ROOMS_RESP = 2002
@@ -128,9 +133,7 @@ class ircOpcodes(Enum):
     """Error code to indicate a room already exists when trying to create a new room."""
     ERR_USER_ALREADY_IN_ROOM = 3012
     """Error code to indicate to a client that they are already joined to a room."""
-    
+    ERR_ILLEGAL_NAME_LENGTH = 3013
 
-
-        
-
-        
+    ERR_ILLEGAL_ROOM_NAME_LENGTH = 3014
+    ERR_ILLEGAL_MESSAGE_LENGTH = 3015

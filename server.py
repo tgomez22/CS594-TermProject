@@ -7,7 +7,6 @@ import threading
 
 
 class server:
-
     def __init__(self):
         """Make a server."""
         # key = name, value = socket for the
@@ -23,6 +22,7 @@ class server:
         self.threadCount = 0
         self.buffSize = 4096
         self.mutex = threading.Lock()
+        self.runServer = True
 
     def threadedClient(self, connection, address):
         """For each conneciton request, create a new thread and pass this function to handle Receiving requests from the client."""
@@ -64,9 +64,61 @@ class server:
         except socket.error as e:
             print(str(e))
 
-        runServer = True
+        start_new_thread(self.handleIncomingRequests, ())
 
-        while runServer:
+        self.listCommands()
+        while self.runServer:
+            # diagnositic commands
+            self.handleInput()
+
+        self.serverSocket.close()
+
+    def handleInput(self):
+        cmd = str.lower(input("Enter a diagnostic command: "))
+        if(cmd == "-rooms"):
+            self.showAllRooms()
+        elif(cmd == "-clients"):
+            self.showActiveUsers()
+        elif(cmd == "-clientsinroom"):
+            self.showUsersInRoom()
+        elif(cmd == "-threadCount"):
+            print(f"There are {self.threadCount} active threads.")
+        elif(cmd == "-quit" or cmd == "-q"):
+            self.runServer = False
+        else:
+            print("Not a valid command. Please try again.")
+
+    def listCommands():
+        print("Here are the commands you can run to see the state of different objects on the server:")
+        print("-rooms           shows all rooms")
+        print("-clients         shows all the active clients connected to the server")
+        print(
+            "-clientsInRoom   prompts for a room name to list clients joined to that room")
+        print("-threadCount     shows number of active client threads")
+        print("-quit or -q      ")
+
+    def showAllRooms(self):
+        print("These are all of the existing rooms:")
+        for room in self.roomDictionary.keys():
+            print(room)
+
+    def showActiveUsers(self):
+        print("These are the currently connected clients:")
+        for user in self.clientDictionary.keys():
+            print(user)
+
+    def showUsersInRoom(self):
+        self.showAllRooms()
+        room = input(
+            "Enter the name of the room you wish to see the users for: ")
+
+        if room in self.roomDictionary.keys():
+            print(*self.roomDictionary[room], sep="\n")
+        else:
+            print("Sorry that room does not exist.")
+
+    def handleIncomingRequests(self):
+        while self.runServer:
             client, address = self.serverSocket.accept()
 
             print(f'Connected to: {address[0]}: {str(address[1])}')
@@ -76,8 +128,6 @@ class server:
             print(f'active threads: {threading.active_count}')
 
             start_new_thread(self.threadedClient, (client, address))
-
-        self.serverSocket.close()
 
     def removeClientFromServer(self, connection):
         """Whenever a client leaves their program, either by request or because of an error, this function
@@ -114,7 +164,7 @@ class server:
         """This function checks to see if a given user name or room name contains only legal characters.
         Returns true if the string passed contains only legal characters.
         Returns false if the string passed contains unaccepted characters."""
-        if(len(name) < 1 or len(name) > 32 or name.startswith(' ') or name.endswith(' ')):
+        if(name.startswith(' ') or name.endswith(' ')):
             return False
         for letter in name:
             if(ord(letter) < 32 or ord(letter) > 126):
@@ -129,6 +179,10 @@ class server:
         if not self.isNameLegal(newClient):
             print(f"ERROR: name contains illegal characters: {newClient}")
             return ircOpcodes.ERR_ILLEGAL_NAME
+        nameLength = len(newClient)
+
+        if nameLength < 1 or nameLength > 32:
+            return ircOpcodes.ERR_ILLEGAL_NAME_LENGTH
 
         print(f"Checking if {newClient} is already taken name...")
         self.mutex.acquire()
@@ -195,6 +249,7 @@ class server:
     def makeNewRoom(self, packet):
         """Create a new room on client request."""
         newRoom = packet.payload.roomName
+        roomNameLength = len(newRoom)
         # room exits return err
         self.mutex.acquire()
         if newRoom in list(self.roomDictionary.keys()):
@@ -204,7 +259,13 @@ class server:
         elif not self.isNameLegal(newRoom):
             self.mutex.release()
             return ircOpcodes.ERR_ILLEGAL_NAME
-        # valid room name, create room
+
+        # illegal room name length, return err
+        elif roomNameLength < 1 or roomNameLength > 32:
+            self.mutex.release()
+            return ircOpcodes.ERR_ILLEGAL_ROOM_NAME_LENGTH
+
+            # valid room name, create room
         else:
             self.roomDictionary[packet.payload.roomName] = [
                 packet.payload.senderName]
@@ -254,6 +315,8 @@ class server:
         returns a success response to the sender."""
         if packet.payload.receiverName not in (self.roomDictionary.keys()):
             return ircPacket(ircHeader(ircOpcodes.ROOM_DOES_NOT_EXIST, 0), "")
+        elif len(packet.payload.message.messageBody) > 140:
+            return ircPacket(ircHeader(ircOpcodes.ERR_ILLEGAL_MESSAGE_LENGTH, 0), "")
         else:
             print(f"\nReceived request to send message")
             print(f"sender name: {packet.payload.message.senderName}")
@@ -314,7 +377,7 @@ class server:
 
         # make new room request
         elif(packet.header.opCode == ircOpcodes.MAKE_ROOM_REQ):
-            return ircPacket(ircHeader(self.makeNewRoom(packet), 0), "")
+            return ircPacket(ircHeader(self.makeNewRoom(packet), len(packet.payload)), packet.payload)
 
         # join room request
         elif packet.header.opCode == ircOpcodes.JOIN_ROOM_REQ:
