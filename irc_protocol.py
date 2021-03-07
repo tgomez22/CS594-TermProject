@@ -1,51 +1,68 @@
+"""
+This module contains the data structures to be used by client and server 
+when transmitting and/or receiving packets.
+"""
 from enum import Enum
- 
-#server to client
+
+
 class message:
-    def __init__( self, senderName, messageBody):
+    """Contents of a message sent from one client and received by another"""
+    
+    def __init__( self, senderName:str, messageBody:str):
+        """Create a message."""
         self.senderName = senderName
         self.messageBody = messageBody
     
-    def display(self):
-        print(f"From {self.senderName}: {self.messageBody}")
         
 
 #client to server
 class messagePayload:
-    def __init__(self, senderName: str, receiverName, messageBody):
+    """A specific payload to be passed in with an ircPacket used when
+    exchanging messages.
+    """
+    def __init__(self, senderName: str, receiverName, messageBody:str):
+        """Make a messagePayload"""
         self.receiverName = receiverName
         self.message = message(senderName, messageBody)
         
 
 class roomPayload:
+    """
+    A specific payload for creating and joining rooms.
+    """
     def __init__(self, senderName: str, roomName: str):
+        """Create a roomPayload"""
         self.senderName = senderName
         self.roomName = roomName
 
 class ircHeader:
+    """Header information to be used by """
     def __init__(self, opCode: int, payloadLength: int):
         self.opCode = opCode
         self.payloadLength = payloadLength
 
 class ircPacket:
+    """ircPackets contain encapsulated data to be consumed by client and server."""
     def __init__(self, header: ircHeader, payload):
         self.header = header
+        # self.opcode
+        # self.payloadLength
         self.payload = payload
 
 
-
 class ircOpcodes(Enum):
-    IRC_OPCODE_REGISTER_CLIENT_REQ = 1000
-    IRC_OPCODE_CLIENT_KEEPALIVE = 1001
-    IRC_OPCODE_LIST_ROOMS_REQ = 1002
-    IRC_OPCODE_LIST_USERS_REQ = 1003
-    IRC_OPCODE_JOIN_ROOM_REQ = 1004
-    IRC_OPCODE_SEND_MSG_REQ = 1005
-    IRC_OPCODE_LIST_MEMBERS_OF_ROOM_REQ = 1006
-    IRC_OPCODE_MAKE_ROOM_REQ = 1007
-    IRC_OPCODE_SEND_PRIV_MSG_REQ = 1008
-    IRC_OPCODE_START_PRIV_CHAT_REQ = 1009
-    IRC_OPCODE_SEND_BROADCAST_REQ = 1010
+    """Contains all of the opcodes to determin what action is taken on an ircPacket."""
+    REGISTER_CLIENT_REQ = 1000
+    CLIENT_KEEPALIVE = 1001 #NOTE NOT USED
+    LIST_ROOMS_REQ = 1002
+    LIST_USERS_REQ = 1003
+    JOIN_ROOM_REQ = 1004
+    SEND_MSG_REQ = 1005
+    LIST_MEMBERS_OF_ROOM_REQ = 1006
+    MAKE_ROOM_REQ = 1007
+    SEND_PRIV_MSG_REQ = 1008
+    START_PRIV_CHAT_REQ = 1009
+    SEND_BROADCAST_REQ = 1010
     IRC_OPCODE_LEAVE_ROOM_REQ = 1011
     IRC_OPCODE_CLIENT_QUIT_MSG = 1012
     

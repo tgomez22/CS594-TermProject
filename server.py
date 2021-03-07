@@ -36,32 +36,7 @@ class server:
                 data = connection.recv(self.buffSize)
             except:
                 print("\n*** ERROR Detected ***")
-                self.mutex.acquire()
-                clientInDictionary = None
-                for client, value in self.clientDictionary.items():
-                    if value == connection:
-                        clientInDictionary = client
-
-                if clientInDictionary != None:
-                    print(f"clients beofre removing {clientInDictionary} from connected clients:\n{self.clientDictionary}")
-                    # self.clientDictionary.pop(clientInDictionary)
-                    del self.clientDictionary[clientInDictionary]
-                    print(f"After {clientInDictionary} was removed: ")
-                    print(self.clientDictionary)
-
-                roomsClientIsIn = []
-                for room, members in self.roomDictionary.items():
-                    for member in list(members):
-                        if member == client:
-                            roomsClientIsIn.append(room)
-
-
-                if len(roomsClientIsIn) > 0:
-                    for room in roomsClientIsIn:
-                        self.roomDictionary[room].remove(client)
-                        print(f"{client} removed from room: {room}")
-
-                self.mutex.release()
+                self.removeClientFromServer(connection)
                 self.threadCount -= 1
                 return
             if not data:
@@ -103,6 +78,34 @@ class server:
 
         self.serverSocket.close()
 
+    def removeClientFromServer(self, connection):
+        self.mutex.acquire()
+        
+        clientInDictionary = None
+        for client, value in self.clientDictionary.items():
+            if value == connection:
+                clientInDictionary = client
+
+        if clientInDictionary != None:
+            print(f"Client list before removing {clientInDictionary} from connected clients:\n{list(self.clientDictionary.keys())}")
+            del self.clientDictionary[clientInDictionary]
+            print(f"After {clientInDictionary} was removed: ")
+            print(self.clientDictionary)
+
+            roomsClientIsIn = []
+            for room, members in self.roomDictionary.items():
+                for member in list(members):
+                    if member == clientInDictionary :
+                                roomsClientIsIn.append(room)
+                    
+                    print(f"Attempting to remove the Client {clientInDictionary} from these rooms: \n{roomsClientIsIn}")
+                    for room in roomsClientIsIn:
+                        self.roomDictionary[room].remove(clientInDictionary )
+                        print(f"{clientInDictionary} removed from room: {room}")
+
+                self.mutex.release()
+
+
     def isNameLegal(self, name: str):
         if(len(name) < 1 or len(name) > 32 or name.startswith(' ') or name.endswith(' ')):
             return False
@@ -141,6 +144,7 @@ class server:
             self.mutex.release()
 
             return ircOpcodes.IRC_OPCODE_REGISTER_CLIENT_RESP
+
 
     def addClientToRoom(self, requestingClient, requestedRoom):
         self.mutex.acquire()
@@ -219,15 +223,17 @@ class server:
        # receiverName = packet.payload.receiverName
        # lengthMessage = len(packet.payload.message.messageBody)
         #payloadLength = lengthSenderName + lengthMessage
+        if(packet.header.opCode != ircOpcodes.SEND_PRIV_MSG_REQ):
+            packet.header.opCode = ircOpcodes.IRC_OPCODE_FORWARD_MESSAGE
 
-        packet.header.opCode = ircOpcodes.IRC_OPCODE_FORWARD_MESSAGE
+        elif(packet.header.opCode == ircOpcodes.SEND_PRIV_MSG_REQ):
+            packet.header.opCode = ircOpcodes.IRC_OPCODE_FORWARD_PRIVATE_MESSAGE
         # forwardHeader = ircHeader(
         #     ircOpcodes.IRC_OPCODE_FORWARD_MESSAGE, payloadLength)
         # forwardPacket = ircPacket(forwardHeader, packet.payload)
         try:
             self.mutex.acquire()
-            self.clientDictionary[client].send(
-                pickle.dumps(packet))
+            self.clientDictionary[client].send(pickle.dumps(packet))
             self.mutex.release()
         except socket.error as e:
             print(str(e))
@@ -271,11 +277,11 @@ class server:
         # print(f"\npacket type: {type(packet)}\n")
 
         # register new client
-        if(packet.header.opCode == ircOpcodes.IRC_OPCODE_REGISTER_CLIENT_REQ):
+        if(packet.header.opCode == ircOpcodes.REGISTER_CLIENT_REQ):
             return ircPacket(ircHeader(self.registerClient(packet.payload, connection), 0), "")
 
         # list rooms request
-        elif (packet.header.opCode == ircOpcodes.IRC_OPCODE_LIST_ROOMS_REQ):
+        elif (packet.header.opCode == ircOpcodes.LIST_ROOMS_REQ):
             rooms = list(self.roomDictionary.keys())
             temp = ircPacket(
                 ircHeader(ircOpcodes.IRC_OPCODE_LIST_ROOMS_RESP, len(rooms)), rooms)
@@ -284,22 +290,31 @@ class server:
             # in payload
 
         # list users request
-        elif(packet.header.opCode == ircOpcodes.IRC_OPCODE_LIST_USERS_REQ):
+        elif(packet.header.opCode == ircOpcodes.LIST_USERS_REQ):
             length = 0
             for user in self.clientDictionary.keys():
                 length += len(user)
             return ircPacket(ircHeader(ircOpcodes.IRC_OPCODE_LIST_USERS_RESP, length), list(self.clientDictionary.keys()))
 
         # make new room request
-        elif(packet.header.opCode == ircOpcodes.IRC_OPCODE_MAKE_ROOM_REQ):
+        elif(packet.header.opCode == ircOpcodes.MAKE_ROOM_REQ):
             return ircPacket(ircHeader(self.makeNewRoom(packet), 0), "")
 
         # join room request
-        elif packet.header.opCode == ircOpcodes.IRC_OPCODE_JOIN_ROOM_REQ:
-            return self.addClientToRoom(packet.payload.senderName, packet.payload.roomName)
+        elif packet.header.opCode == ircOpcodes.JOIN_ROOM_REQ:
+            roomsToJoin = []
+            length = 0
+            sender = packet.payload.senderName
+            for room in packet.payload.roomName:
+                if room in self.roomDictionary.keys():
+                    roomsToJoin.append(room)
+                    length += len(room)
+                    start_new_thread(self.addClientToRoom, (sender, room), )
+            return ircPacket(ircHeader(ircOpcodes.IRC_OPCODE_JOIN_ROOM_RESP, length), roomsToJoin)
+
 
         # list members of specific room
-        elif packet.header.opCode == ircOpcodes.IRC_OPCODE_LIST_MEMBERS_OF_ROOM_REQ:
+        elif packet.header.opCode == ircOpcodes.LIST_MEMBERS_OF_ROOM_REQ:
             return self.getMembersOfSpecificRoom(packet.payload)
 
         # remove user from specific room
@@ -307,52 +322,54 @@ class server:
             self.removeSpecificUserFromRoom(packet)
 
         # send message to room
-        elif(packet.header.opCode == ircOpcodes.IRC_OPCODE_SEND_MSG_REQ):
+        elif(packet.header.opCode == ircOpcodes.SEND_MSG_REQ):
             print("Server received SEND_MSG_REQ")
             return self.sendMessageRequest(packet)
 
-        elif(packet.header.opcode == ircOpcodes.IRC_OPCODE_START_PRIV_CHAT_REQ):
-            print()
-            if(packet.payload in self.clientInDictionary ):
-                # make new thread
-                # forward private message to packet.payload
-                return ircPacket(ircHeader(ircOpcodes.IRC_OPCODE_START_PRIV_CHAT_RESP, 0), "")
+        #once private chat is established, then send message
+        elif(packet.header.opCode == ircOpcodes.SEND_PRIV_MSG_REQ):
+            if(packet.payload.receiverName in self.clientDictionary):
+                start_new_thread(self.forwardMessageToClient, (packet.payload.receiverName, packet ))
+                return ircPacket(ircHeader(ircOpcodes.IRC_OPCODE_SEND_PRIV_MSG_RESP, packet.header.payloadLength), packet.payload)
             else:
-                return ircPacket(ircHeader(ircOpcodes.IRC_ERR_RECIPIENT_DOES_NOT_EXIST , len(packet.payload)), packet.payload)
+                return ircPacket(ircHeader(ircOpcodes.IRC_ERR_RECIPIENT_DOES_NOT_EXIST , 0), "")
+
+        #a user requests to start a private chat. Server checks if recpient exists
+        elif(packet.header.opCode == ircOpcodes.START_PRIV_CHAT_REQ):
+            if(packet.payload.receiverName in self.clientDictionary):
+                return ircPacket(ircHeader(ircOpcodes.IRC_OPCODE_START_PRIV_CHAT_RESP, 0), "")
+            else: # NOTE if a bigger app, we could send back recipient name to requesting client for better logging
+                return ircPacket(ircHeader(ircOpcodes.IRC_ERR_RECIPIENT_DOES_NOT_EXIST , 0), "")
 
         # quit
         elif(packet.header.opCode == ircOpcodes.IRC_OPCODE_CLIENT_QUIT_MSG):
             self.mutex.acquire()
             print("\nReceived request to disconnect a client.")
-            clientInDictionary = None
-            for client, value in self.clientDictionary.items():
-                if value == connection:
-                    clientInDictionary = client
-
-            if clientInDictionary != None:
-                print(f"Client list beofre removing {clientInDictionary} from connected clients:\n{self.clientDictionary}")
-                # self.clientDictionary.pop(clientInDictionary)
-                del self.clientDictionary[clientInDictionary]
-                print(f"After {clientInDictionary} was removed: ")
-                print(self.clientDictionary)
-
-            roomsClientIsIn = []
-            for room, members in self.roomDictionary.items():
-                for member in list(members):
-                    if member == client:
-                        roomsClientIsIn.append(room)
-
-
-            if len(roomsClientIsIn) > 0:
-                for room in roomsClientIsIn:
-                    self.roomDictionary[room].remove(client)
-                    print(f"{client} removed from room: {room}")
-
-            self.mutex.release()
+            self.removeClientFromServer(connection)
             return None
 
         # broadcast message
+        elif(packet.header.opCode == ircOpcodes.SEND_BROADCAST_REQ):
+            roomsToForward = []
+           
+            for room in packet.payload.receiverName:
+                if room in self.roomDictionary.keys():
+                    roomsToForward.append(room)
+                    tempPacket = packet
+                    tempPacket.payload.receiverName = room
+                    start_new_thread(self.forwardMessageToRoom, (tempPacket, )) 
+
+            respCode = ircOpcodes.IRC_OPCODE_SEND_BROADCAST_RESP
+            header = ircHeader(respCode, len(roomsToForward))
+            pktPayload = messagePayload(packet.payload.senderName, roomsToForward, packet.payload.message)
+            return ircPacket(header, pktPayload)
+            
+        
+        # how did you get here?
+        else:
+            return ircPacket(ircHeader(ircOpcodes.IRC_ERR, 0), "")
 
 
+    
 testServer = server()
 testServer.startServer()
