@@ -1,9 +1,7 @@
 # Internetworking Protocols Final Project
-Winter term 2021
-
-Portland State University
-
-by Tristan Gomez and Lydia Doza
+* Winter term 2021
+* Portland State University
+* by Tristan Gomez and [Lydia Doza](https://github.com/LydiaDoza)
 
 Documentation Link: https://tgomez22.github.io/CS594-TermProject/
 
