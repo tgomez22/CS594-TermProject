@@ -132,7 +132,7 @@ server    </h1>
         <span class="c1"># key = roomName, value = list of clients joined in room</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">roomDictionary</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Lobby&quot;</span><span class="p">:</span> <span class="p">[]}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Tristan and Lydia&#39;s IRC Server&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">host</span> <span class="o">=</span> <span class="s1">&#39;127.0.0.1&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">host</span> <span class="o">=</span> <span class="s1">&#39;192.168.1.6&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">port</span> <span class="o">=</span> <span class="mi">6667</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">serverSocket</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">)</span>
         <span class="c1"># socket.create_server((host, port))</span>
@@ -155,10 +155,11 @@ server    </h1>
                 <span class="bp">self</span><span class="o">.</span><span class="n">threadCount</span> <span class="o">-=</span> <span class="mi">1</span>
                 <span class="k">return</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">data</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">unique message before guess</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="k">break</span>
 
             <span class="n">clientRequestPacket</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Hot off the byte stream: </span><span class="si">{</span><span class="n">clientRequestPacket</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="n">responsePacket</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handlePacket</span><span class="p">(</span><span class="n">clientRequestPacket</span><span class="p">,</span> <span class="n">connection</span><span class="p">)</span>
             <span class="k">if</span><span class="p">(</span><span class="n">responsePacket</span> <span class="o">==</span> <span class="kc">None</span><span class="p">):</span>
                 <span class="n">clientAlive</span> <span class="o">=</span> <span class="kc">False</span>
@@ -202,10 +203,12 @@ server    </h1>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;There are </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">threadCount</span><span class="si">}</span><span class="s2"> active threads.&quot;</span><span class="p">)</span>
         <span class="k">elif</span><span class="p">(</span><span class="n">cmd</span> <span class="o">==</span> <span class="s2">&quot;-quit&quot;</span> <span class="ow">or</span> <span class="n">cmd</span> <span class="o">==</span> <span class="s2">&quot;-q&quot;</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">runServer</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">elif</span><span class="p">(</span><span class="n">cmd</span> <span class="o">==</span> <span class="s2">&quot;-help&quot;</span> <span class="ow">or</span> <span class="n">cmd</span> <span class="o">==</span> <span class="s2">&quot;-h&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">listCommands</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Not a valid command. Please try again.&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">listCommands</span><span class="p">():</span>
+    <span class="k">def</span> <span class="nf">listCommands</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Here are the commands you can run to see the state of different objects on the server:&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;-rooms           shows all rooms&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;-clients         shows all the active clients connected to the server&quot;</span><span class="p">)</span>
@@ -250,18 +253,14 @@ server    </h1>
         <span class="sd">&quot;&quot;&quot;Whenever a client leaves their program, either by request or because of an error, this function</span>
 <span class="sd">        handles removing the client from the active users list and removes the connection information.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
-
+        
         <span class="n">clientInDictionary</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">for</span> <span class="n">client</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">clientDictionary</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">value</span> <span class="o">==</span> <span class="n">connection</span><span class="p">:</span>
                 <span class="n">clientInDictionary</span> <span class="o">=</span> <span class="n">client</span>
 
         <span class="k">if</span> <span class="n">clientInDictionary</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Client list before removing </span><span class="si">{</span><span class="n">clientInDictionary</span><span class="si">}</span><span class="s2"> from connected clients:</span><span class="se">\n</span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clientDictionary</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">clientDictionary</span><span class="p">[</span><span class="n">clientInDictionary</span><span class="p">]</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;After </span><span class="si">{</span><span class="n">clientInDictionary</span><span class="si">}</span><span class="s2"> was removed: &quot;</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clientDictionary</span><span class="p">)</span>
 
             <span class="n">roomsClientIsIn</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="k">for</span> <span class="n">room</span><span class="p">,</span> <span class="n">members</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">roomDictionary</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -269,13 +268,10 @@ server    </h1>
                     <span class="k">if</span> <span class="n">member</span> <span class="o">==</span> <span class="n">clientInDictionary</span><span class="p">:</span>
                         <span class="n">roomsClientIsIn</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">room</span><span class="p">)</span>
 
-                    <span class="nb">print</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;Attempting to remove the Client </span><span class="si">{</span><span class="n">clientInDictionary</span><span class="si">}</span><span class="s2"> from these rooms: </span><span class="se">\n</span><span class="si">{</span><span class="n">roomsClientIsIn</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-                    <span class="k">for</span> <span class="n">room</span> <span class="ow">in</span> <span class="n">roomsClientIsIn</span><span class="p">:</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">roomDictionary</span><span class="p">[</span><span class="n">room</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">clientInDictionary</span><span class="p">)</span>
-                        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">clientInDictionary</span><span class="si">}</span><span class="s2"> removed from room: </span><span class="si">{</span><span class="n">room</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">room</span> <span class="ow">in</span> <span class="n">roomsClientIsIn</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">roomDictionary</span><span class="p">[</span><span class="n">room</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">clientInDictionary</span><span class="p">)</span>
 
-                <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">isNameLegal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;This function checks to see if a given user name or room name contains only legal characters.</span>
@@ -448,20 +444,24 @@ server    </h1>
     <span class="k">def</span> <span class="nf">getMembersOfSpecificRoom</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">desiredRoom</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Handles request from a client to list all the clients in a room.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">desiredRoom</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">roomDictionary</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
-            <span class="k">return</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">ROOM_DOES_NOT_EXIST</span><span class="p">),</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">rooms</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">roomDictionary</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">desiredRoom</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">rooms</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">ROOM_DOES_NOT_EXIST</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
             <span class="n">responsePayload</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">roomDictionary</span><span class="p">[</span><span class="n">desiredRoom</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;response payload: </span><span class="si">{</span><span class="n">responsePayload</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="n">responseLength</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">responsePayload</span><span class="p">:</span>
                 <span class="n">responseLength</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
-            <span class="k">return</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">IRC_OPCODE_LIST_MEMBERS_OF_ROOM_RESP</span><span class="p">,</span> <span class="n">responseLength</span><span class="p">),</span> <span class="n">responsePayload</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_MEMBERS_OF_ROOM_RESP</span><span class="p">,</span> <span class="n">responseLength</span><span class="p">),</span> <span class="n">responsePayload</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">removeSpecificUserFromRoom</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">packet</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Handles client request to leave a room.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;remove </span><span class="si">{</span><span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">senderName</span><span class="si">}</span><span class="s2"> from </span><span class="si">{</span><span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">roomName</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">senderName</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">roomDictionary</span><span class="p">[</span><span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">roomName</span><span class="p">]:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">roomDictionary</span><span class="p">[</span><span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">roomName</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span>
                 <span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">senderName</span><span class="p">)</span>
@@ -471,14 +471,16 @@ server    </h1>
         <span class="sd">&quot;&quot;&quot;This function is where a request packet from a client first gets filtered.</span>
 <span class="sd">        Calls appropriate handle function based on opcode in the packet header.&quot;&quot;&quot;</span>
         <span class="c1"># print(f&quot;\npacket type: {type(packet)}\n&quot;)</span>
-
+        <span class="nb">print</span><span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span><span class="p">)</span>
         <span class="c1"># register new client</span>
         <span class="k">if</span><span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">REGISTER_CLIENT_REQ</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">ircHeader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">registerClient</span><span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="p">,</span> <span class="n">connection</span><span class="p">),</span> <span class="mi">0</span><span class="p">),</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
 
         <span class="c1"># list rooms request</span>
         <span class="k">elif</span> <span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_ROOMS_REQ</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
             <span class="n">rooms</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">roomDictionary</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
             <span class="n">temp</span> <span class="o">=</span> <span class="n">ircPacket</span><span class="p">(</span>
                 <span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_ROOMS_RESP</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">rooms</span><span class="p">)),</span> <span class="n">rooms</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The get all rooms response is: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">temp</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -487,17 +489,20 @@ server    </h1>
 
         <span class="c1"># list users request</span>
         <span class="k">elif</span><span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_USERS_REQ</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+            <span class="n">clients</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clientDictionary</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
             <span class="n">length</span> <span class="o">=</span> <span class="mi">0</span>
-            <span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">clientDictionary</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">clients</span><span class="p">:</span>
                 <span class="n">length</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_USERS_RESP</span><span class="p">,</span> <span class="n">length</span><span class="p">),</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clientDictionary</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+            <span class="k">return</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_USERS_RESP</span><span class="p">,</span> <span class="n">length</span><span class="p">),</span><span class="n">clients</span><span class="p">)</span>
 
         <span class="c1"># make new room request</span>
         <span class="k">elif</span><span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">MAKE_ROOM_REQ</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">ircHeader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">makeNewRoom</span><span class="p">(</span><span class="n">packet</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="p">)),</span> <span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">ircHeader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">makeNewRoom</span><span class="p">(</span><span class="n">packet</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">senderName</span> <span class="o">+</span> <span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">roomName</span><span class="p">)),</span> <span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="p">)</span>
 
         <span class="c1"># join room request</span>
-        <span class="k">elif</span> <span class="n">packet</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">JOIN_ROOM_REQ</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">JOIN_ROOM_REQ</span><span class="p">):</span>
             <span class="n">roomsToJoin</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="n">length</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="n">sender</span> <span class="o">=</span> <span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">senderName</span>
@@ -509,7 +514,8 @@ server    </h1>
             <span class="k">return</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">JOIN_ROOM_RESP</span><span class="p">,</span> <span class="n">length</span><span class="p">),</span> <span class="n">roomsToJoin</span><span class="p">)</span>
 
         <span class="c1"># list members of specific room</span>
-        <span class="k">elif</span> <span class="n">packet</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_MEMBERS_OF_ROOM_REQ</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_MEMBERS_OF_ROOM_REQ</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;server got request for members of room </span><span class="si">{</span><span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">getMembersOfSpecificRoom</span><span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="p">)</span>
 
         <span class="c1"># remove user from specific room</span>
@@ -539,7 +545,6 @@ server    </h1>
 
         <span class="c1"># quit</span>
         <span class="k">elif</span><span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">CLIENT_QUIT_MSG</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Received request to disconnect a client.&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">removeClientFromServer</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
             <span class="k">return</span> <span class="kc">None</span>
@@ -558,7 +563,7 @@ server    </h1>
             <span class="n">respCode</span> <span class="o">=</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">SEND_BROADCAST_RESP</span>
             <span class="n">header</span> <span class="o">=</span> <span class="n">ircHeader</span><span class="p">(</span><span class="n">respCode</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">roomsToForward</span><span class="p">))</span>
             <span class="n">pktPayload</span> <span class="o">=</span> <span class="n">messagePayload</span><span class="p">(</span>
-                <span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">senderName</span><span class="p">,</span> <span class="n">roomsToForward</span><span class="p">,</span> <span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+                <span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">senderName</span><span class="p">,</span> <span class="n">roomsToForward</span><span class="p">,</span> <span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">messageBody</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">pktPayload</span><span class="p">)</span>
 
         <span class="c1"># how did you get here?</span>
@@ -589,7 +594,7 @@ server    </h1>
         <span class="c1"># key = roomName, value = list of clients joined in room</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">roomDictionary</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Lobby&quot;</span><span class="p">:</span> <span class="p">[]}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Tristan and Lydia&#39;s IRC Server&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">host</span> <span class="o">=</span> <span class="s1">&#39;127.0.0.1&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">host</span> <span class="o">=</span> <span class="s1">&#39;192.168.1.6&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">port</span> <span class="o">=</span> <span class="mi">6667</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">serverSocket</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">)</span>
         <span class="c1"># socket.create_server((host, port))</span>
@@ -612,10 +617,11 @@ server    </h1>
                 <span class="bp">self</span><span class="o">.</span><span class="n">threadCount</span> <span class="o">-=</span> <span class="mi">1</span>
                 <span class="k">return</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">data</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">unique message before guess</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="k">break</span>
 
             <span class="n">clientRequestPacket</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Hot off the byte stream: </span><span class="si">{</span><span class="n">clientRequestPacket</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="n">responsePacket</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handlePacket</span><span class="p">(</span><span class="n">clientRequestPacket</span><span class="p">,</span> <span class="n">connection</span><span class="p">)</span>
             <span class="k">if</span><span class="p">(</span><span class="n">responsePacket</span> <span class="o">==</span> <span class="kc">None</span><span class="p">):</span>
                 <span class="n">clientAlive</span> <span class="o">=</span> <span class="kc">False</span>
@@ -659,10 +665,12 @@ server    </h1>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;There are </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">threadCount</span><span class="si">}</span><span class="s2"> active threads.&quot;</span><span class="p">)</span>
         <span class="k">elif</span><span class="p">(</span><span class="n">cmd</span> <span class="o">==</span> <span class="s2">&quot;-quit&quot;</span> <span class="ow">or</span> <span class="n">cmd</span> <span class="o">==</span> <span class="s2">&quot;-q&quot;</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">runServer</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">elif</span><span class="p">(</span><span class="n">cmd</span> <span class="o">==</span> <span class="s2">&quot;-help&quot;</span> <span class="ow">or</span> <span class="n">cmd</span> <span class="o">==</span> <span class="s2">&quot;-h&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">listCommands</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Not a valid command. Please try again.&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">listCommands</span><span class="p">():</span>
+    <span class="k">def</span> <span class="nf">listCommands</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Here are the commands you can run to see the state of different objects on the server:&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;-rooms           shows all rooms&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;-clients         shows all the active clients connected to the server&quot;</span><span class="p">)</span>
@@ -707,18 +715,14 @@ server    </h1>
         <span class="sd">&quot;&quot;&quot;Whenever a client leaves their program, either by request or because of an error, this function</span>
 <span class="sd">        handles removing the client from the active users list and removes the connection information.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
-
+        
         <span class="n">clientInDictionary</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">for</span> <span class="n">client</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">clientDictionary</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">value</span> <span class="o">==</span> <span class="n">connection</span><span class="p">:</span>
                 <span class="n">clientInDictionary</span> <span class="o">=</span> <span class="n">client</span>
 
         <span class="k">if</span> <span class="n">clientInDictionary</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Client list before removing </span><span class="si">{</span><span class="n">clientInDictionary</span><span class="si">}</span><span class="s2"> from connected clients:</span><span class="se">\n</span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clientDictionary</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">clientDictionary</span><span class="p">[</span><span class="n">clientInDictionary</span><span class="p">]</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;After </span><span class="si">{</span><span class="n">clientInDictionary</span><span class="si">}</span><span class="s2"> was removed: &quot;</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clientDictionary</span><span class="p">)</span>
 
             <span class="n">roomsClientIsIn</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="k">for</span> <span class="n">room</span><span class="p">,</span> <span class="n">members</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">roomDictionary</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -726,13 +730,10 @@ server    </h1>
                     <span class="k">if</span> <span class="n">member</span> <span class="o">==</span> <span class="n">clientInDictionary</span><span class="p">:</span>
                         <span class="n">roomsClientIsIn</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">room</span><span class="p">)</span>
 
-                    <span class="nb">print</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;Attempting to remove the Client </span><span class="si">{</span><span class="n">clientInDictionary</span><span class="si">}</span><span class="s2"> from these rooms: </span><span class="se">\n</span><span class="si">{</span><span class="n">roomsClientIsIn</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-                    <span class="k">for</span> <span class="n">room</span> <span class="ow">in</span> <span class="n">roomsClientIsIn</span><span class="p">:</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">roomDictionary</span><span class="p">[</span><span class="n">room</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">clientInDictionary</span><span class="p">)</span>
-                        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">clientInDictionary</span><span class="si">}</span><span class="s2"> removed from room: </span><span class="si">{</span><span class="n">room</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">room</span> <span class="ow">in</span> <span class="n">roomsClientIsIn</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">roomDictionary</span><span class="p">[</span><span class="n">room</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">clientInDictionary</span><span class="p">)</span>
 
-                <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">isNameLegal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;This function checks to see if a given user name or room name contains only legal characters.</span>
@@ -905,20 +906,24 @@ server    </h1>
     <span class="k">def</span> <span class="nf">getMembersOfSpecificRoom</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">desiredRoom</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Handles request from a client to list all the clients in a room.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">desiredRoom</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">roomDictionary</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
-            <span class="k">return</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">ROOM_DOES_NOT_EXIST</span><span class="p">),</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">rooms</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">roomDictionary</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">desiredRoom</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">rooms</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">ROOM_DOES_NOT_EXIST</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
             <span class="n">responsePayload</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">roomDictionary</span><span class="p">[</span><span class="n">desiredRoom</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;response payload: </span><span class="si">{</span><span class="n">responsePayload</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="n">responseLength</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">responsePayload</span><span class="p">:</span>
                 <span class="n">responseLength</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
-            <span class="k">return</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">IRC_OPCODE_LIST_MEMBERS_OF_ROOM_RESP</span><span class="p">,</span> <span class="n">responseLength</span><span class="p">),</span> <span class="n">responsePayload</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_MEMBERS_OF_ROOM_RESP</span><span class="p">,</span> <span class="n">responseLength</span><span class="p">),</span> <span class="n">responsePayload</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">removeSpecificUserFromRoom</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">packet</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Handles client request to leave a room.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;remove </span><span class="si">{</span><span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">senderName</span><span class="si">}</span><span class="s2"> from </span><span class="si">{</span><span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">roomName</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">senderName</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">roomDictionary</span><span class="p">[</span><span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">roomName</span><span class="p">]:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">roomDictionary</span><span class="p">[</span><span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">roomName</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span>
                 <span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">senderName</span><span class="p">)</span>
@@ -928,14 +933,16 @@ server    </h1>
         <span class="sd">&quot;&quot;&quot;This function is where a request packet from a client first gets filtered.</span>
 <span class="sd">        Calls appropriate handle function based on opcode in the packet header.&quot;&quot;&quot;</span>
         <span class="c1"># print(f&quot;\npacket type: {type(packet)}\n&quot;)</span>
-
+        <span class="nb">print</span><span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span><span class="p">)</span>
         <span class="c1"># register new client</span>
         <span class="k">if</span><span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">REGISTER_CLIENT_REQ</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">ircHeader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">registerClient</span><span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="p">,</span> <span class="n">connection</span><span class="p">),</span> <span class="mi">0</span><span class="p">),</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
 
         <span class="c1"># list rooms request</span>
         <span class="k">elif</span> <span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_ROOMS_REQ</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
             <span class="n">rooms</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">roomDictionary</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
             <span class="n">temp</span> <span class="o">=</span> <span class="n">ircPacket</span><span class="p">(</span>
                 <span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_ROOMS_RESP</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">rooms</span><span class="p">)),</span> <span class="n">rooms</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The get all rooms response is: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">temp</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -944,17 +951,20 @@ server    </h1>
 
         <span class="c1"># list users request</span>
         <span class="k">elif</span><span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_USERS_REQ</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+            <span class="n">clients</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clientDictionary</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
             <span class="n">length</span> <span class="o">=</span> <span class="mi">0</span>
-            <span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">clientDictionary</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">clients</span><span class="p">:</span>
                 <span class="n">length</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_USERS_RESP</span><span class="p">,</span> <span class="n">length</span><span class="p">),</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clientDictionary</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+            <span class="k">return</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_USERS_RESP</span><span class="p">,</span> <span class="n">length</span><span class="p">),</span><span class="n">clients</span><span class="p">)</span>
 
         <span class="c1"># make new room request</span>
         <span class="k">elif</span><span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">MAKE_ROOM_REQ</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">ircHeader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">makeNewRoom</span><span class="p">(</span><span class="n">packet</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="p">)),</span> <span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">ircHeader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">makeNewRoom</span><span class="p">(</span><span class="n">packet</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">senderName</span> <span class="o">+</span> <span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">roomName</span><span class="p">)),</span> <span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="p">)</span>
 
         <span class="c1"># join room request</span>
-        <span class="k">elif</span> <span class="n">packet</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">JOIN_ROOM_REQ</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">JOIN_ROOM_REQ</span><span class="p">):</span>
             <span class="n">roomsToJoin</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="n">length</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="n">sender</span> <span class="o">=</span> <span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">senderName</span>
@@ -966,7 +976,8 @@ server    </h1>
             <span class="k">return</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">JOIN_ROOM_RESP</span><span class="p">,</span> <span class="n">length</span><span class="p">),</span> <span class="n">roomsToJoin</span><span class="p">)</span>
 
         <span class="c1"># list members of specific room</span>
-        <span class="k">elif</span> <span class="n">packet</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_MEMBERS_OF_ROOM_REQ</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_MEMBERS_OF_ROOM_REQ</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;server got request for members of room </span><span class="si">{</span><span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">getMembersOfSpecificRoom</span><span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="p">)</span>
 
         <span class="c1"># remove user from specific room</span>
@@ -996,7 +1007,6 @@ server    </h1>
 
         <span class="c1"># quit</span>
         <span class="k">elif</span><span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">CLIENT_QUIT_MSG</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Received request to disconnect a client.&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">removeClientFromServer</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
             <span class="k">return</span> <span class="kc">None</span>
@@ -1015,7 +1025,7 @@ server    </h1>
             <span class="n">respCode</span> <span class="o">=</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">SEND_BROADCAST_RESP</span>
             <span class="n">header</span> <span class="o">=</span> <span class="n">ircHeader</span><span class="p">(</span><span class="n">respCode</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">roomsToForward</span><span class="p">))</span>
             <span class="n">pktPayload</span> <span class="o">=</span> <span class="n">messagePayload</span><span class="p">(</span>
-                <span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">senderName</span><span class="p">,</span> <span class="n">roomsToForward</span><span class="p">,</span> <span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+                <span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">senderName</span><span class="p">,</span> <span class="n">roomsToForward</span><span class="p">,</span> <span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">messageBody</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">pktPayload</span><span class="p">)</span>
 
         <span class="c1"># how did you get here?</span>
@@ -1043,7 +1053,7 @@ server    </h1>
         <span class="c1"># key = roomName, value = list of clients joined in room</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">roomDictionary</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Lobby&quot;</span><span class="p">:</span> <span class="p">[]}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Tristan and Lydia&#39;s IRC Server&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">host</span> <span class="o">=</span> <span class="s1">&#39;127.0.0.1&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">host</span> <span class="o">=</span> <span class="s1">&#39;192.168.1.6&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">port</span> <span class="o">=</span> <span class="mi">6667</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">serverSocket</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">)</span>
         <span class="c1"># socket.create_server((host, port))</span>
@@ -1084,10 +1094,11 @@ server    </h1>
                 <span class="bp">self</span><span class="o">.</span><span class="n">threadCount</span> <span class="o">-=</span> <span class="mi">1</span>
                 <span class="k">return</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">data</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">unique message before guess</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="k">break</span>
 
             <span class="n">clientRequestPacket</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Hot off the byte stream: </span><span class="si">{</span><span class="n">clientRequestPacket</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="n">responsePacket</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handlePacket</span><span class="p">(</span><span class="n">clientRequestPacket</span><span class="p">,</span> <span class="n">connection</span><span class="p">)</span>
             <span class="k">if</span><span class="p">(</span><span class="n">responsePacket</span> <span class="o">==</span> <span class="kc">None</span><span class="p">):</span>
                 <span class="n">clientAlive</span> <span class="o">=</span> <span class="kc">False</span>
@@ -1167,6 +1178,8 @@ server    </h1>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;There are </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">threadCount</span><span class="si">}</span><span class="s2"> active threads.&quot;</span><span class="p">)</span>
         <span class="k">elif</span><span class="p">(</span><span class="n">cmd</span> <span class="o">==</span> <span class="s2">&quot;-quit&quot;</span> <span class="ow">or</span> <span class="n">cmd</span> <span class="o">==</span> <span class="s2">&quot;-q&quot;</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">runServer</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">elif</span><span class="p">(</span><span class="n">cmd</span> <span class="o">==</span> <span class="s2">&quot;-help&quot;</span> <span class="ow">or</span> <span class="n">cmd</span> <span class="o">==</span> <span class="s2">&quot;-h&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">listCommands</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Not a valid command. Please try again.&quot;</span><span class="p">)</span>
 </pre></div>
@@ -1181,12 +1194,12 @@ server    </h1>
 
         
             <span class="def">def</span>
-            <span class="name">listCommands</span><span class="signature">()</span>:
+            <span class="name">listCommands</span><span class="signature">(self)</span>:
     </div>
 
                 <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">listCommands</span><span class="p">():</span>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">listCommands</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Here are the commands you can run to see the state of different objects on the server:&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;-rooms           shows all rooms&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;-clients         shows all the active clients connected to the server&quot;</span><span class="p">)</span>
@@ -1311,18 +1324,14 @@ server    </h1>
         <span class="sd">&quot;&quot;&quot;Whenever a client leaves their program, either by request or because of an error, this function</span>
 <span class="sd">        handles removing the client from the active users list and removes the connection information.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
-
+        
         <span class="n">clientInDictionary</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">for</span> <span class="n">client</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">clientDictionary</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">value</span> <span class="o">==</span> <span class="n">connection</span><span class="p">:</span>
                 <span class="n">clientInDictionary</span> <span class="o">=</span> <span class="n">client</span>
 
         <span class="k">if</span> <span class="n">clientInDictionary</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Client list before removing </span><span class="si">{</span><span class="n">clientInDictionary</span><span class="si">}</span><span class="s2"> from connected clients:</span><span class="se">\n</span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clientDictionary</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">clientDictionary</span><span class="p">[</span><span class="n">clientInDictionary</span><span class="p">]</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;After </span><span class="si">{</span><span class="n">clientInDictionary</span><span class="si">}</span><span class="s2"> was removed: &quot;</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clientDictionary</span><span class="p">)</span>
 
             <span class="n">roomsClientIsIn</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="k">for</span> <span class="n">room</span><span class="p">,</span> <span class="n">members</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">roomDictionary</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -1330,13 +1339,10 @@ server    </h1>
                     <span class="k">if</span> <span class="n">member</span> <span class="o">==</span> <span class="n">clientInDictionary</span><span class="p">:</span>
                         <span class="n">roomsClientIsIn</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">room</span><span class="p">)</span>
 
-                    <span class="nb">print</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;Attempting to remove the Client </span><span class="si">{</span><span class="n">clientInDictionary</span><span class="si">}</span><span class="s2"> from these rooms: </span><span class="se">\n</span><span class="si">{</span><span class="n">roomsClientIsIn</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-                    <span class="k">for</span> <span class="n">room</span> <span class="ow">in</span> <span class="n">roomsClientIsIn</span><span class="p">:</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">roomDictionary</span><span class="p">[</span><span class="n">room</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">clientInDictionary</span><span class="p">)</span>
-                        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">clientInDictionary</span><span class="si">}</span><span class="s2"> removed from room: </span><span class="si">{</span><span class="n">room</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">room</span> <span class="ow">in</span> <span class="n">roomsClientIsIn</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">roomDictionary</span><span class="p">[</span><span class="n">room</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">clientInDictionary</span><span class="p">)</span>
 
-                <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
 </pre></div>
 
         </details>
@@ -1661,16 +1667,19 @@ returns a success response to the sender.</p>
             <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">getMembersOfSpecificRoom</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">desiredRoom</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Handles request from a client to list all the clients in a room.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">desiredRoom</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">roomDictionary</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
-            <span class="k">return</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">ROOM_DOES_NOT_EXIST</span><span class="p">),</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">rooms</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">roomDictionary</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">desiredRoom</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">rooms</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">ROOM_DOES_NOT_EXIST</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
             <span class="n">responsePayload</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">roomDictionary</span><span class="p">[</span><span class="n">desiredRoom</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;response payload: </span><span class="si">{</span><span class="n">responsePayload</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="n">responseLength</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">responsePayload</span><span class="p">:</span>
                 <span class="n">responseLength</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
-            <span class="k">return</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">IRC_OPCODE_LIST_MEMBERS_OF_ROOM_RESP</span><span class="p">,</span> <span class="n">responseLength</span><span class="p">),</span> <span class="n">responsePayload</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_MEMBERS_OF_ROOM_RESP</span><span class="p">,</span> <span class="n">responseLength</span><span class="p">),</span> <span class="n">responsePayload</span><span class="p">)</span>
 </pre></div>
 
         </details>
@@ -1693,6 +1702,7 @@ returns a success response to the sender.</p>
             <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">removeSpecificUserFromRoom</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">packet</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Handles client request to leave a room.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;remove </span><span class="si">{</span><span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">senderName</span><span class="si">}</span><span class="s2"> from </span><span class="si">{</span><span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">roomName</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">senderName</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">roomDictionary</span><span class="p">[</span><span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">roomName</span><span class="p">]:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">roomDictionary</span><span class="p">[</span><span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">roomName</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span>
                 <span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">senderName</span><span class="p">)</span>
@@ -1720,14 +1730,16 @@ returns a success response to the sender.</p>
         <span class="sd">&quot;&quot;&quot;This function is where a request packet from a client first gets filtered.</span>
 <span class="sd">        Calls appropriate handle function based on opcode in the packet header.&quot;&quot;&quot;</span>
         <span class="c1"># print(f&quot;\npacket type: {type(packet)}\n&quot;)</span>
-
+        <span class="nb">print</span><span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span><span class="p">)</span>
         <span class="c1"># register new client</span>
         <span class="k">if</span><span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">REGISTER_CLIENT_REQ</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">ircHeader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">registerClient</span><span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="p">,</span> <span class="n">connection</span><span class="p">),</span> <span class="mi">0</span><span class="p">),</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
 
         <span class="c1"># list rooms request</span>
         <span class="k">elif</span> <span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_ROOMS_REQ</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
             <span class="n">rooms</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">roomDictionary</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
             <span class="n">temp</span> <span class="o">=</span> <span class="n">ircPacket</span><span class="p">(</span>
                 <span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_ROOMS_RESP</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">rooms</span><span class="p">)),</span> <span class="n">rooms</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The get all rooms response is: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">temp</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -1736,17 +1748,20 @@ returns a success response to the sender.</p>
 
         <span class="c1"># list users request</span>
         <span class="k">elif</span><span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_USERS_REQ</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+            <span class="n">clients</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clientDictionary</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
             <span class="n">length</span> <span class="o">=</span> <span class="mi">0</span>
-            <span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">clientDictionary</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">clients</span><span class="p">:</span>
                 <span class="n">length</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_USERS_RESP</span><span class="p">,</span> <span class="n">length</span><span class="p">),</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clientDictionary</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+            <span class="k">return</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_USERS_RESP</span><span class="p">,</span> <span class="n">length</span><span class="p">),</span><span class="n">clients</span><span class="p">)</span>
 
         <span class="c1"># make new room request</span>
         <span class="k">elif</span><span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">MAKE_ROOM_REQ</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">ircHeader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">makeNewRoom</span><span class="p">(</span><span class="n">packet</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="p">)),</span> <span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">ircHeader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">makeNewRoom</span><span class="p">(</span><span class="n">packet</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">senderName</span> <span class="o">+</span> <span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">roomName</span><span class="p">)),</span> <span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="p">)</span>
 
         <span class="c1"># join room request</span>
-        <span class="k">elif</span> <span class="n">packet</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">JOIN_ROOM_REQ</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">JOIN_ROOM_REQ</span><span class="p">):</span>
             <span class="n">roomsToJoin</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="n">length</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="n">sender</span> <span class="o">=</span> <span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">senderName</span>
@@ -1758,7 +1773,8 @@ returns a success response to the sender.</p>
             <span class="k">return</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">JOIN_ROOM_RESP</span><span class="p">,</span> <span class="n">length</span><span class="p">),</span> <span class="n">roomsToJoin</span><span class="p">)</span>
 
         <span class="c1"># list members of specific room</span>
-        <span class="k">elif</span> <span class="n">packet</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_MEMBERS_OF_ROOM_REQ</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_MEMBERS_OF_ROOM_REQ</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;server got request for members of room </span><span class="si">{</span><span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">getMembersOfSpecificRoom</span><span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="p">)</span>
 
         <span class="c1"># remove user from specific room</span>
@@ -1788,7 +1804,6 @@ returns a success response to the sender.</p>
 
         <span class="c1"># quit</span>
         <span class="k">elif</span><span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">CLIENT_QUIT_MSG</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Received request to disconnect a client.&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">removeClientFromServer</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
             <span class="k">return</span> <span class="kc">None</span>
@@ -1807,7 +1822,7 @@ returns a success response to the sender.</p>
             <span class="n">respCode</span> <span class="o">=</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">SEND_BROADCAST_RESP</span>
             <span class="n">header</span> <span class="o">=</span> <span class="n">ircHeader</span><span class="p">(</span><span class="n">respCode</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">roomsToForward</span><span class="p">))</span>
             <span class="n">pktPayload</span> <span class="o">=</span> <span class="n">messagePayload</span><span class="p">(</span>
-                <span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">senderName</span><span class="p">,</span> <span class="n">roomsToForward</span><span class="p">,</span> <span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+                <span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">senderName</span><span class="p">,</span> <span class="n">roomsToForward</span><span class="p">,</span> <span class="n">packet</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">messageBody</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">pktPayload</span><span class="p">)</span>
 
         <span class="c1"># how did you get here?</span>

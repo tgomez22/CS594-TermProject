@@ -81,27 +81,6 @@
                                 <a class="function" href="#ircOpcodes.__init__">ircOpcodes</a>
                         </li>
                         <li>
-                                <a class="variable" href="#ircOpcodes.CLIENT_KEEPALIVE">CLIENT_KEEPALIVE</a>
-                        </li>
-                        <li>
-                                <a class="variable" href="#ircOpcodes.SERVER_KEEPALIVE">SERVER_KEEPALIVE</a>
-                        </li>
-                        <li>
-                                <a class="variable" href="#ircOpcodes.ERR_ILLEGAL_LENGTH">ERR_ILLEGAL_LENGTH</a>
-                        </li>
-                        <li>
-                                <a class="variable" href="#ircOpcodes.ERR_ILLEGAL_OPCODE">ERR_ILLEGAL_OPCODE</a>
-                        </li>
-                        <li>
-                                <a class="variable" href="#ircOpcodes.ERR_ILLEGAL_MESSAGE">ERR_ILLEGAL_MESSAGE</a>
-                        </li>
-                        <li>
-                                <a class="variable" href="#ircOpcodes.ERR_TOO_MANY_ROOMS">ERR_TOO_MANY_ROOMS</a>
-                        </li>
-                        <li>
-                                <a class="variable" href="#ircOpcodes.ERR_TIMEOUT">ERR_TIMEOUT</a>
-                        </li>
-                        <li>
                                 <a class="variable" href="#ircOpcodes.REGISTER_CLIENT_REQ">REGISTER_CLIENT_REQ</a>
                         </li>
                         <li>
@@ -289,86 +268,80 @@ when transmitting and/or receiving packets.</p>
 
 <span class="k">class</span> <span class="nc">ircOpcodes</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Contains all of the opcodes (constant integers) to determin what action is taken on an ircPacket.&quot;&quot;&quot;</span>
-    <span class="n">CLIENT_KEEPALIVE</span> <span class="o">=</span> <span class="mi">1001</span>  <span class="c1"># NOTE NOT USED</span>
-    <span class="n">SERVER_KEEPALIVE</span> <span class="o">=</span> <span class="mi">2001</span>  <span class="c1"># NOTE NOT USED</span>
-    <span class="n">ERR_ILLEGAL_LENGTH</span> <span class="o">=</span> <span class="mi">3002</span>  <span class="c1"># NOTE NOT USED</span>
-    <span class="n">ERR_ILLEGAL_OPCODE</span> <span class="o">=</span> <span class="mi">3003</span>  <span class="c1"># NOTE NOT USED</span>
-    <span class="n">ERR_ILLEGAL_MESSAGE</span> <span class="o">=</span> <span class="mi">3005</span>  <span class="c1"># NOTE NOT USED</span>
-    <span class="n">ERR_TOO_MANY_ROOMS</span> <span class="o">=</span> <span class="mi">3007</span>  <span class="c1"># NOTE NOT USED</span>
-    <span class="n">ERR_TIMEOUT</span> <span class="o">=</span> <span class="mi">3009</span>  <span class="c1"># NOTE NOT USED</span>
 
     <span class="n">REGISTER_CLIENT_REQ</span> <span class="o">=</span> <span class="mi">1000</span>
     <span class="sd">&quot;&quot;&quot;Sent from Client to Server, opcode to request connection.&quot;&quot;&quot;</span>
-    <span class="n">LIST_ROOMS_REQ</span> <span class="o">=</span> <span class="mi">1002</span>
+    <span class="n">LIST_ROOMS_REQ</span> <span class="o">=</span> <span class="mi">1001</span>
     <span class="sd">&quot;&quot;&quot;Sent from client to server, request to list all rooms in server.&quot;&quot;&quot;</span>
-    <span class="n">LIST_USERS_REQ</span> <span class="o">=</span> <span class="mi">1003</span>
+    <span class="n">LIST_USERS_REQ</span> <span class="o">=</span> <span class="mi">1002</span>
     <span class="sd">&quot;&quot;&quot;Sent from client to server, request to list all users joined to server.&quot;&quot;&quot;</span>
-    <span class="n">JOIN_ROOM_REQ</span> <span class="o">=</span> <span class="mi">1004</span>
+    <span class="n">JOIN_ROOM_REQ</span> <span class="o">=</span> <span class="mi">1003</span>
     <span class="sd">&quot;&quot;&quot;Sent from client to server, request to join specified room(s) on server.&quot;&quot;&quot;</span>
-    <span class="n">SEND_MSG_REQ</span> <span class="o">=</span> <span class="mi">1005</span>
+    <span class="n">SEND_MSG_REQ</span> <span class="o">=</span> <span class="mi">1004</span>
     <span class="sd">&quot;&quot;&quot;Sent from client to server, request to send a message to a room on server.&quot;&quot;&quot;</span>
-    <span class="n">LIST_MEMBERS_OF_ROOM_REQ</span> <span class="o">=</span> <span class="mi">1006</span>
+    <span class="n">LIST_MEMBERS_OF_ROOM_REQ</span> <span class="o">=</span> <span class="mi">1005</span>
     <span class="sd">&quot;&quot;&quot;Sent from client to server, request to list all users joined in a room in the server.&quot;&quot;&quot;</span>
-    <span class="n">MAKE_ROOM_REQ</span> <span class="o">=</span> <span class="mi">1007</span>
+    <span class="n">MAKE_ROOM_REQ</span> <span class="o">=</span> <span class="mi">1006</span>
     <span class="sd">&quot;&quot;&quot;Sent from client to server, request to create a new room on the server.&quot;&quot;&quot;</span>
-    <span class="n">SEND_PRIV_MSG_REQ</span> <span class="o">=</span> <span class="mi">1008</span>
+    <span class="n">SEND_PRIV_MSG_REQ</span> <span class="o">=</span> <span class="mi">1007</span>
     <span class="sd">&quot;&quot;&quot;Sent from client to server, request to send a message to a user on the server.&quot;&quot;&quot;</span>
-    <span class="n">START_PRIV_CHAT_REQ</span> <span class="o">=</span> <span class="mi">1009</span>
+    <span class="n">START_PRIV_CHAT_REQ</span> <span class="o">=</span> <span class="mi">1008</span>
     <span class="sd">&quot;&quot;&quot;Sent from client to server, request to send a message to a user on the server.&quot;&quot;&quot;</span>
-    <span class="n">SEND_BROADCAST_REQ</span> <span class="o">=</span> <span class="mi">1010</span>
+    <span class="n">SEND_BROADCAST_REQ</span> <span class="o">=</span> <span class="mi">1009</span>
     <span class="sd">&quot;&quot;&quot;Sent from client to server, request to send a message to multiple rooms on the server.&quot;&quot;&quot;</span>
-    <span class="n">LEAVE_ROOM_REQ</span> <span class="o">=</span> <span class="mi">1011</span>
+    <span class="n">LEAVE_ROOM_REQ</span> <span class="o">=</span> <span class="mi">1010</span>
     <span class="sd">&quot;&quot;&quot;Sent from client to server, request to leave a room on the server.&quot;&quot;&quot;</span>
-    <span class="n">CLIENT_QUIT_MSG</span> <span class="o">=</span> <span class="mi">1012</span>
+    <span class="n">CLIENT_QUIT_MSG</span> <span class="o">=</span> <span class="mi">1011</span>
     <span class="sd">&quot;&quot;&quot;Sent from client to server, request close the connection on the server.&quot;&quot;&quot;</span>
 
     <span class="n">REGISTER_CLIENT_RESP</span> <span class="o">=</span> <span class="mi">2000</span>
     <span class="sd">&quot;&quot;&quot;Sent from server to client, success response to client request to connect to the server.&quot;&quot;&quot;</span>
-    <span class="n">LIST_ROOMS_RESP</span> <span class="o">=</span> <span class="mi">2002</span>
+    <span class="n">LIST_ROOMS_RESP</span> <span class="o">=</span> <span class="mi">2001</span>
     <span class="sd">&quot;&quot;&quot;Sent from server to client, success response to client request to list all rooms in the server.&quot;&quot;&quot;</span>
-    <span class="n">LIST_USERS_RESP</span> <span class="o">=</span> <span class="mi">2003</span>
+    <span class="n">LIST_USERS_RESP</span> <span class="o">=</span> <span class="mi">2002</span>
     <span class="sd">&quot;&quot;&quot;Sent from server to client, success response to client request to list all users in the server.&quot;&quot;&quot;</span>
-    <span class="n">JOIN_ROOM_RESP</span> <span class="o">=</span> <span class="mi">2004</span>
+    <span class="n">JOIN_ROOM_RESP</span> <span class="o">=</span> <span class="mi">2003</span>
     <span class="sd">&quot;&quot;&quot;Sent from server to client, success response to client request to join a room in the server.&quot;&quot;&quot;</span>
-    <span class="n">SEND_MSG_RESP</span> <span class="o">=</span> <span class="mi">2005</span>
+    <span class="n">SEND_MSG_RESP</span> <span class="o">=</span> <span class="mi">2004</span>
     <span class="sd">&quot;&quot;&quot;Sent from server to client, success response to client request to send a message to a room in the server.&quot;&quot;&quot;</span>
-    <span class="n">MAKE_ROOM_RESP</span> <span class="o">=</span> <span class="mi">2006</span>
+    <span class="n">MAKE_ROOM_RESP</span> <span class="o">=</span> <span class="mi">2005</span>
     <span class="sd">&quot;&quot;&quot;Sent from server to client, success response to client request to create a new room on the server.&quot;&quot;&quot;</span>
-    <span class="n">LIST_MEMBERS_OF_ROOM_RESP</span> <span class="o">=</span> <span class="mi">2007</span>
+    <span class="n">LIST_MEMBERS_OF_ROOM_RESP</span> <span class="o">=</span> <span class="mi">2006</span>
     <span class="sd">&quot;&quot;&quot;Sent from server to client, success response to client request to list all users in a room on the server.&quot;&quot;&quot;</span>
-    <span class="n">SEND_PRIV_MSG_RESP</span> <span class="o">=</span> <span class="mi">2008</span>
+    <span class="n">SEND_PRIV_MSG_RESP</span> <span class="o">=</span> <span class="mi">2007</span>
     <span class="sd">&quot;&quot;&quot;Sent from server to client, success response to client request to send a private message to another client in the server.&quot;&quot;&quot;</span>
-    <span class="n">START_PRIV_CHAT_RESP</span> <span class="o">=</span> <span class="mi">2009</span>
+    <span class="n">START_PRIV_CHAT_RESP</span> <span class="o">=</span> <span class="mi">2008</span>
     <span class="sd">&quot;&quot;&quot;Sent from server to client, success response to client request to start a private chat with client in the server.&quot;&quot;&quot;</span>
-    <span class="n">SEND_BROADCAST_RESP</span> <span class="o">=</span> <span class="mi">2010</span>
+    <span class="n">SEND_BROADCAST_RESP</span> <span class="o">=</span> <span class="mi">2009</span>
     <span class="sd">&quot;&quot;&quot;Sent from server to client, success response to client request to send a message to multiple rooms in the server.&quot;&quot;&quot;</span>
-    <span class="n">FORWARD_MESSAGE</span> <span class="o">=</span> <span class="mi">2011</span>
+    <span class="n">FORWARD_MESSAGE</span> <span class="o">=</span> <span class="mi">2010</span>
     <span class="sd">&quot;&quot;&quot;Sent from server to client, forwarded message to a client in a room in the server.&quot;&quot;&quot;</span>
-    <span class="n">FORWARD_PRIVATE_MESSAGE</span> <span class="o">=</span> <span class="mi">2012</span>
+    <span class="n">FORWARD_PRIVATE_MESSAGE</span> <span class="o">=</span> <span class="mi">2011</span>
     <span class="sd">&quot;&quot;&quot;Sent from server to client, forwarded private message to a client from another client in the server.&quot;&quot;&quot;</span>
 
     <span class="n">IRC_ERR</span> <span class="o">=</span> <span class="mi">3000</span>
-    <span class="sd">&quot;&quot;&quot;Catchall generic error encounterd opcode.&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;Catchall generic error encountered opcode.&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;Error code to indicate an unrecognized opcode was sent.&quot;&quot;&quot;</span>
     <span class="n">ERR_NAME_EXISTS</span> <span class="o">=</span> <span class="mi">3001</span>
     <span class="sd">&quot;&quot;&quot;Error thrown when a user tries to register with a name that is already taken on the server.&quot;&quot;&quot;</span>
-    <span class="sd">&quot;&quot;&quot;Error code to indicate that the length is too long.&quot;&quot;&quot;</span>
-    <span class="sd">&quot;&quot;&quot;Error code to indicate an unrecognized opcode was sent.&quot;&quot;&quot;</span>
-    <span class="n">ERR_ILLEGAL_NAME</span> <span class="o">=</span> <span class="mi">3004</span>
+    <span class="n">ERR_ILLEGAL_NAME</span> <span class="o">=</span> <span class="mi">3002</span>
     <span class="sd">&quot;&quot;&quot;Error code to indicate illegal characters sent when trying to register a name of a room or user.&quot;&quot;&quot;</span>
-    <span class="n">ERR_TOO_MANY_USERS</span> <span class="o">=</span> <span class="mi">3006</span>
+    <span class="n">ERR_TOO_MANY_USERS</span> <span class="o">=</span> <span class="mi">3003</span>
     <span class="sd">&quot;&quot;&quot;Error code to indicate that a room is full.&quot;&quot;&quot;</span>
-    <span class="n">ERR_RECIPIENT_DOES_NOT_EXIST</span> <span class="o">=</span> <span class="mi">3008</span>
+    <span class="n">ERR_RECIPIENT_DOES_NOT_EXIST</span> <span class="o">=</span> <span class="mi">3004</span>
     <span class="sd">&quot;&quot;&quot;Error code to indicate an that a client does not exist in the server when trying to send a packet to the client.&quot;&quot;&quot;</span>
-    <span class="n">ROOM_DOES_NOT_EXIST</span> <span class="o">=</span> <span class="mi">3010</span>
+    <span class="n">ROOM_DOES_NOT_EXIST</span> <span class="o">=</span> <span class="mi">3005</span>
     <span class="sd">&quot;&quot;&quot;Error code to indicate an attempt was made to interact with a room that is not in the server.&quot;&quot;&quot;</span>
-    <span class="n">ERR_ROOM_ALREADY_EXISTS</span> <span class="o">=</span> <span class="mi">3011</span>
+    <span class="n">ERR_ROOM_ALREADY_EXISTS</span> <span class="o">=</span> <span class="mi">3006</span>
     <span class="sd">&quot;&quot;&quot;Error code to indicate a room already exists when trying to create a new room.&quot;&quot;&quot;</span>
-    <span class="n">ERR_USER_ALREADY_IN_ROOM</span> <span class="o">=</span> <span class="mi">3012</span>
+    <span class="n">ERR_USER_ALREADY_IN_ROOM</span> <span class="o">=</span> <span class="mi">3007</span>
     <span class="sd">&quot;&quot;&quot;Error code to indicate to a client that they are already joined to a room.&quot;&quot;&quot;</span>
-    <span class="n">ERR_ILLEGAL_NAME_LENGTH</span> <span class="o">=</span> <span class="mi">3013</span>
-
-    <span class="n">ERR_ILLEGAL_ROOM_NAME_LENGTH</span> <span class="o">=</span> <span class="mi">3014</span>
-    <span class="n">ERR_ILLEGAL_MESSAGE_LENGTH</span> <span class="o">=</span> <span class="mi">3015</span>
+    <span class="n">ERR_ILLEGAL_NAME_LENGTH</span> <span class="o">=</span> <span class="mi">3008</span>
+    <span class="sd">&quot;&quot;&quot;Error code to indicate that a username&#39;s length is too long.&quot;&quot;&quot;</span>
+    <span class="n">ERR_ILLEGAL_ROOM_NAME_LENGTH</span> <span class="o">=</span> <span class="mi">3009</span>
+    <span class="sd">&quot;&quot;&quot;Error code to indicate that a room name&#39;s length is too long or too short.&quot;&quot;&quot;</span>
+    <span class="n">ERR_ILLEGAL_MESSAGE_LENGTH</span> <span class="o">=</span> <span class="mi">3010</span>
+    <span class="sd">&quot;&quot;&quot;Error code to indicate a relayed message is too long&quot;&quot;&quot;</span>
 </pre></div>
 
         </details>
@@ -628,86 +601,80 @@ exchanging messages.</p>
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">ircOpcodes</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Contains all of the opcodes (constant integers) to determin what action is taken on an ircPacket.&quot;&quot;&quot;</span>
-    <span class="n">CLIENT_KEEPALIVE</span> <span class="o">=</span> <span class="mi">1001</span>  <span class="c1"># NOTE NOT USED</span>
-    <span class="n">SERVER_KEEPALIVE</span> <span class="o">=</span> <span class="mi">2001</span>  <span class="c1"># NOTE NOT USED</span>
-    <span class="n">ERR_ILLEGAL_LENGTH</span> <span class="o">=</span> <span class="mi">3002</span>  <span class="c1"># NOTE NOT USED</span>
-    <span class="n">ERR_ILLEGAL_OPCODE</span> <span class="o">=</span> <span class="mi">3003</span>  <span class="c1"># NOTE NOT USED</span>
-    <span class="n">ERR_ILLEGAL_MESSAGE</span> <span class="o">=</span> <span class="mi">3005</span>  <span class="c1"># NOTE NOT USED</span>
-    <span class="n">ERR_TOO_MANY_ROOMS</span> <span class="o">=</span> <span class="mi">3007</span>  <span class="c1"># NOTE NOT USED</span>
-    <span class="n">ERR_TIMEOUT</span> <span class="o">=</span> <span class="mi">3009</span>  <span class="c1"># NOTE NOT USED</span>
 
     <span class="n">REGISTER_CLIENT_REQ</span> <span class="o">=</span> <span class="mi">1000</span>
     <span class="sd">&quot;&quot;&quot;Sent from Client to Server, opcode to request connection.&quot;&quot;&quot;</span>
-    <span class="n">LIST_ROOMS_REQ</span> <span class="o">=</span> <span class="mi">1002</span>
+    <span class="n">LIST_ROOMS_REQ</span> <span class="o">=</span> <span class="mi">1001</span>
     <span class="sd">&quot;&quot;&quot;Sent from client to server, request to list all rooms in server.&quot;&quot;&quot;</span>
-    <span class="n">LIST_USERS_REQ</span> <span class="o">=</span> <span class="mi">1003</span>
+    <span class="n">LIST_USERS_REQ</span> <span class="o">=</span> <span class="mi">1002</span>
     <span class="sd">&quot;&quot;&quot;Sent from client to server, request to list all users joined to server.&quot;&quot;&quot;</span>
-    <span class="n">JOIN_ROOM_REQ</span> <span class="o">=</span> <span class="mi">1004</span>
+    <span class="n">JOIN_ROOM_REQ</span> <span class="o">=</span> <span class="mi">1003</span>
     <span class="sd">&quot;&quot;&quot;Sent from client to server, request to join specified room(s) on server.&quot;&quot;&quot;</span>
-    <span class="n">SEND_MSG_REQ</span> <span class="o">=</span> <span class="mi">1005</span>
+    <span class="n">SEND_MSG_REQ</span> <span class="o">=</span> <span class="mi">1004</span>
     <span class="sd">&quot;&quot;&quot;Sent from client to server, request to send a message to a room on server.&quot;&quot;&quot;</span>
-    <span class="n">LIST_MEMBERS_OF_ROOM_REQ</span> <span class="o">=</span> <span class="mi">1006</span>
+    <span class="n">LIST_MEMBERS_OF_ROOM_REQ</span> <span class="o">=</span> <span class="mi">1005</span>
     <span class="sd">&quot;&quot;&quot;Sent from client to server, request to list all users joined in a room in the server.&quot;&quot;&quot;</span>
-    <span class="n">MAKE_ROOM_REQ</span> <span class="o">=</span> <span class="mi">1007</span>
+    <span class="n">MAKE_ROOM_REQ</span> <span class="o">=</span> <span class="mi">1006</span>
     <span class="sd">&quot;&quot;&quot;Sent from client to server, request to create a new room on the server.&quot;&quot;&quot;</span>
-    <span class="n">SEND_PRIV_MSG_REQ</span> <span class="o">=</span> <span class="mi">1008</span>
+    <span class="n">SEND_PRIV_MSG_REQ</span> <span class="o">=</span> <span class="mi">1007</span>
     <span class="sd">&quot;&quot;&quot;Sent from client to server, request to send a message to a user on the server.&quot;&quot;&quot;</span>
-    <span class="n">START_PRIV_CHAT_REQ</span> <span class="o">=</span> <span class="mi">1009</span>
+    <span class="n">START_PRIV_CHAT_REQ</span> <span class="o">=</span> <span class="mi">1008</span>
     <span class="sd">&quot;&quot;&quot;Sent from client to server, request to send a message to a user on the server.&quot;&quot;&quot;</span>
-    <span class="n">SEND_BROADCAST_REQ</span> <span class="o">=</span> <span class="mi">1010</span>
+    <span class="n">SEND_BROADCAST_REQ</span> <span class="o">=</span> <span class="mi">1009</span>
     <span class="sd">&quot;&quot;&quot;Sent from client to server, request to send a message to multiple rooms on the server.&quot;&quot;&quot;</span>
-    <span class="n">LEAVE_ROOM_REQ</span> <span class="o">=</span> <span class="mi">1011</span>
+    <span class="n">LEAVE_ROOM_REQ</span> <span class="o">=</span> <span class="mi">1010</span>
     <span class="sd">&quot;&quot;&quot;Sent from client to server, request to leave a room on the server.&quot;&quot;&quot;</span>
-    <span class="n">CLIENT_QUIT_MSG</span> <span class="o">=</span> <span class="mi">1012</span>
+    <span class="n">CLIENT_QUIT_MSG</span> <span class="o">=</span> <span class="mi">1011</span>
     <span class="sd">&quot;&quot;&quot;Sent from client to server, request close the connection on the server.&quot;&quot;&quot;</span>
 
     <span class="n">REGISTER_CLIENT_RESP</span> <span class="o">=</span> <span class="mi">2000</span>
     <span class="sd">&quot;&quot;&quot;Sent from server to client, success response to client request to connect to the server.&quot;&quot;&quot;</span>
-    <span class="n">LIST_ROOMS_RESP</span> <span class="o">=</span> <span class="mi">2002</span>
+    <span class="n">LIST_ROOMS_RESP</span> <span class="o">=</span> <span class="mi">2001</span>
     <span class="sd">&quot;&quot;&quot;Sent from server to client, success response to client request to list all rooms in the server.&quot;&quot;&quot;</span>
-    <span class="n">LIST_USERS_RESP</span> <span class="o">=</span> <span class="mi">2003</span>
+    <span class="n">LIST_USERS_RESP</span> <span class="o">=</span> <span class="mi">2002</span>
     <span class="sd">&quot;&quot;&quot;Sent from server to client, success response to client request to list all users in the server.&quot;&quot;&quot;</span>
-    <span class="n">JOIN_ROOM_RESP</span> <span class="o">=</span> <span class="mi">2004</span>
+    <span class="n">JOIN_ROOM_RESP</span> <span class="o">=</span> <span class="mi">2003</span>
     <span class="sd">&quot;&quot;&quot;Sent from server to client, success response to client request to join a room in the server.&quot;&quot;&quot;</span>
-    <span class="n">SEND_MSG_RESP</span> <span class="o">=</span> <span class="mi">2005</span>
+    <span class="n">SEND_MSG_RESP</span> <span class="o">=</span> <span class="mi">2004</span>
     <span class="sd">&quot;&quot;&quot;Sent from server to client, success response to client request to send a message to a room in the server.&quot;&quot;&quot;</span>
-    <span class="n">MAKE_ROOM_RESP</span> <span class="o">=</span> <span class="mi">2006</span>
+    <span class="n">MAKE_ROOM_RESP</span> <span class="o">=</span> <span class="mi">2005</span>
     <span class="sd">&quot;&quot;&quot;Sent from server to client, success response to client request to create a new room on the server.&quot;&quot;&quot;</span>
-    <span class="n">LIST_MEMBERS_OF_ROOM_RESP</span> <span class="o">=</span> <span class="mi">2007</span>
+    <span class="n">LIST_MEMBERS_OF_ROOM_RESP</span> <span class="o">=</span> <span class="mi">2006</span>
     <span class="sd">&quot;&quot;&quot;Sent from server to client, success response to client request to list all users in a room on the server.&quot;&quot;&quot;</span>
-    <span class="n">SEND_PRIV_MSG_RESP</span> <span class="o">=</span> <span class="mi">2008</span>
+    <span class="n">SEND_PRIV_MSG_RESP</span> <span class="o">=</span> <span class="mi">2007</span>
     <span class="sd">&quot;&quot;&quot;Sent from server to client, success response to client request to send a private message to another client in the server.&quot;&quot;&quot;</span>
-    <span class="n">START_PRIV_CHAT_RESP</span> <span class="o">=</span> <span class="mi">2009</span>
+    <span class="n">START_PRIV_CHAT_RESP</span> <span class="o">=</span> <span class="mi">2008</span>
     <span class="sd">&quot;&quot;&quot;Sent from server to client, success response to client request to start a private chat with client in the server.&quot;&quot;&quot;</span>
-    <span class="n">SEND_BROADCAST_RESP</span> <span class="o">=</span> <span class="mi">2010</span>
+    <span class="n">SEND_BROADCAST_RESP</span> <span class="o">=</span> <span class="mi">2009</span>
     <span class="sd">&quot;&quot;&quot;Sent from server to client, success response to client request to send a message to multiple rooms in the server.&quot;&quot;&quot;</span>
-    <span class="n">FORWARD_MESSAGE</span> <span class="o">=</span> <span class="mi">2011</span>
+    <span class="n">FORWARD_MESSAGE</span> <span class="o">=</span> <span class="mi">2010</span>
     <span class="sd">&quot;&quot;&quot;Sent from server to client, forwarded message to a client in a room in the server.&quot;&quot;&quot;</span>
-    <span class="n">FORWARD_PRIVATE_MESSAGE</span> <span class="o">=</span> <span class="mi">2012</span>
+    <span class="n">FORWARD_PRIVATE_MESSAGE</span> <span class="o">=</span> <span class="mi">2011</span>
     <span class="sd">&quot;&quot;&quot;Sent from server to client, forwarded private message to a client from another client in the server.&quot;&quot;&quot;</span>
 
     <span class="n">IRC_ERR</span> <span class="o">=</span> <span class="mi">3000</span>
-    <span class="sd">&quot;&quot;&quot;Catchall generic error encounterd opcode.&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;Catchall generic error encountered opcode.&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;Error code to indicate an unrecognized opcode was sent.&quot;&quot;&quot;</span>
     <span class="n">ERR_NAME_EXISTS</span> <span class="o">=</span> <span class="mi">3001</span>
     <span class="sd">&quot;&quot;&quot;Error thrown when a user tries to register with a name that is already taken on the server.&quot;&quot;&quot;</span>
-    <span class="sd">&quot;&quot;&quot;Error code to indicate that the length is too long.&quot;&quot;&quot;</span>
-    <span class="sd">&quot;&quot;&quot;Error code to indicate an unrecognized opcode was sent.&quot;&quot;&quot;</span>
-    <span class="n">ERR_ILLEGAL_NAME</span> <span class="o">=</span> <span class="mi">3004</span>
+    <span class="n">ERR_ILLEGAL_NAME</span> <span class="o">=</span> <span class="mi">3002</span>
     <span class="sd">&quot;&quot;&quot;Error code to indicate illegal characters sent when trying to register a name of a room or user.&quot;&quot;&quot;</span>
-    <span class="n">ERR_TOO_MANY_USERS</span> <span class="o">=</span> <span class="mi">3006</span>
+    <span class="n">ERR_TOO_MANY_USERS</span> <span class="o">=</span> <span class="mi">3003</span>
     <span class="sd">&quot;&quot;&quot;Error code to indicate that a room is full.&quot;&quot;&quot;</span>
-    <span class="n">ERR_RECIPIENT_DOES_NOT_EXIST</span> <span class="o">=</span> <span class="mi">3008</span>
+    <span class="n">ERR_RECIPIENT_DOES_NOT_EXIST</span> <span class="o">=</span> <span class="mi">3004</span>
     <span class="sd">&quot;&quot;&quot;Error code to indicate an that a client does not exist in the server when trying to send a packet to the client.&quot;&quot;&quot;</span>
-    <span class="n">ROOM_DOES_NOT_EXIST</span> <span class="o">=</span> <span class="mi">3010</span>
+    <span class="n">ROOM_DOES_NOT_EXIST</span> <span class="o">=</span> <span class="mi">3005</span>
     <span class="sd">&quot;&quot;&quot;Error code to indicate an attempt was made to interact with a room that is not in the server.&quot;&quot;&quot;</span>
-    <span class="n">ERR_ROOM_ALREADY_EXISTS</span> <span class="o">=</span> <span class="mi">3011</span>
+    <span class="n">ERR_ROOM_ALREADY_EXISTS</span> <span class="o">=</span> <span class="mi">3006</span>
     <span class="sd">&quot;&quot;&quot;Error code to indicate a room already exists when trying to create a new room.&quot;&quot;&quot;</span>
-    <span class="n">ERR_USER_ALREADY_IN_ROOM</span> <span class="o">=</span> <span class="mi">3012</span>
+    <span class="n">ERR_USER_ALREADY_IN_ROOM</span> <span class="o">=</span> <span class="mi">3007</span>
     <span class="sd">&quot;&quot;&quot;Error code to indicate to a client that they are already joined to a room.&quot;&quot;&quot;</span>
-    <span class="n">ERR_ILLEGAL_NAME_LENGTH</span> <span class="o">=</span> <span class="mi">3013</span>
-
-    <span class="n">ERR_ILLEGAL_ROOM_NAME_LENGTH</span> <span class="o">=</span> <span class="mi">3014</span>
-    <span class="n">ERR_ILLEGAL_MESSAGE_LENGTH</span> <span class="o">=</span> <span class="mi">3015</span>
+    <span class="n">ERR_ILLEGAL_NAME_LENGTH</span> <span class="o">=</span> <span class="mi">3008</span>
+    <span class="sd">&quot;&quot;&quot;Error code to indicate that a username&#39;s length is too long.&quot;&quot;&quot;</span>
+    <span class="n">ERR_ILLEGAL_ROOM_NAME_LENGTH</span> <span class="o">=</span> <span class="mi">3009</span>
+    <span class="sd">&quot;&quot;&quot;Error code to indicate that a room name&#39;s length is too long or too short.&quot;&quot;&quot;</span>
+    <span class="n">ERR_ILLEGAL_MESSAGE_LENGTH</span> <span class="o">=</span> <span class="mi">3010</span>
+    <span class="sd">&quot;&quot;&quot;Error code to indicate a relayed message is too long&quot;&quot;&quot;</span>
 </pre></div>
 
         </details>
@@ -726,69 +693,6 @@ exchanging messages.</p>
     
 
                             </div>
-                            <div id="ircOpcodes.CLIENT_KEEPALIVE" class="classattr">
-                                            <div class="attr variable"><a class="headerlink" href="#ircOpcodes.CLIENT_KEEPALIVE">#&nbsp;&nbsp</a>
-
-        <span class="name">CLIENT_KEEPALIVE</span><span class="default_value"> = &lt;<a href="#ircOpcodes.CLIENT_KEEPALIVE">ircOpcodes.CLIENT_KEEPALIVE</a>: 1001&gt;</span>
-    </div>
-
-    
-
-                            </div>
-                            <div id="ircOpcodes.SERVER_KEEPALIVE" class="classattr">
-                                            <div class="attr variable"><a class="headerlink" href="#ircOpcodes.SERVER_KEEPALIVE">#&nbsp;&nbsp</a>
-
-        <span class="name">SERVER_KEEPALIVE</span><span class="default_value"> = &lt;<a href="#ircOpcodes.SERVER_KEEPALIVE">ircOpcodes.SERVER_KEEPALIVE</a>: 2001&gt;</span>
-    </div>
-
-    
-
-                            </div>
-                            <div id="ircOpcodes.ERR_ILLEGAL_LENGTH" class="classattr">
-                                            <div class="attr variable"><a class="headerlink" href="#ircOpcodes.ERR_ILLEGAL_LENGTH">#&nbsp;&nbsp</a>
-
-        <span class="name">ERR_ILLEGAL_LENGTH</span><span class="default_value"> = &lt;<a href="#ircOpcodes.ERR_ILLEGAL_LENGTH">ircOpcodes.ERR_ILLEGAL_LENGTH</a>: 3002&gt;</span>
-    </div>
-
-    
-
-                            </div>
-                            <div id="ircOpcodes.ERR_ILLEGAL_OPCODE" class="classattr">
-                                            <div class="attr variable"><a class="headerlink" href="#ircOpcodes.ERR_ILLEGAL_OPCODE">#&nbsp;&nbsp</a>
-
-        <span class="name">ERR_ILLEGAL_OPCODE</span><span class="default_value"> = &lt;<a href="#ircOpcodes.ERR_ILLEGAL_OPCODE">ircOpcodes.ERR_ILLEGAL_OPCODE</a>: 3003&gt;</span>
-    </div>
-
-    
-
-                            </div>
-                            <div id="ircOpcodes.ERR_ILLEGAL_MESSAGE" class="classattr">
-                                            <div class="attr variable"><a class="headerlink" href="#ircOpcodes.ERR_ILLEGAL_MESSAGE">#&nbsp;&nbsp</a>
-
-        <span class="name">ERR_ILLEGAL_MESSAGE</span><span class="default_value"> = &lt;<a href="#ircOpcodes.ERR_ILLEGAL_MESSAGE">ircOpcodes.ERR_ILLEGAL_MESSAGE</a>: 3005&gt;</span>
-    </div>
-
-    
-
-                            </div>
-                            <div id="ircOpcodes.ERR_TOO_MANY_ROOMS" class="classattr">
-                                            <div class="attr variable"><a class="headerlink" href="#ircOpcodes.ERR_TOO_MANY_ROOMS">#&nbsp;&nbsp</a>
-
-        <span class="name">ERR_TOO_MANY_ROOMS</span><span class="default_value"> = &lt;<a href="#ircOpcodes.ERR_TOO_MANY_ROOMS">ircOpcodes.ERR_TOO_MANY_ROOMS</a>: 3007&gt;</span>
-    </div>
-
-    
-
-                            </div>
-                            <div id="ircOpcodes.ERR_TIMEOUT" class="classattr">
-                                            <div class="attr variable"><a class="headerlink" href="#ircOpcodes.ERR_TIMEOUT">#&nbsp;&nbsp</a>
-
-        <span class="name">ERR_TIMEOUT</span><span class="default_value"> = &lt;<a href="#ircOpcodes.ERR_TIMEOUT">ircOpcodes.ERR_TIMEOUT</a>: 3009&gt;</span>
-    </div>
-
-    
-
-                            </div>
                             <div id="ircOpcodes.REGISTER_CLIENT_REQ" class="classattr">
                                             <div class="attr variable"><a class="headerlink" href="#ircOpcodes.REGISTER_CLIENT_REQ">#&nbsp;&nbsp</a>
 
@@ -803,7 +707,7 @@ exchanging messages.</p>
                             <div id="ircOpcodes.LIST_ROOMS_REQ" class="classattr">
                                             <div class="attr variable"><a class="headerlink" href="#ircOpcodes.LIST_ROOMS_REQ">#&nbsp;&nbsp</a>
 
-        <span class="name">LIST_ROOMS_REQ</span><span class="default_value"> = &lt;<a href="#ircOpcodes.LIST_ROOMS_REQ">ircOpcodes.LIST_ROOMS_REQ</a>: 1002&gt;</span>
+        <span class="name">LIST_ROOMS_REQ</span><span class="default_value"> = &lt;<a href="#ircOpcodes.LIST_ROOMS_REQ">ircOpcodes.LIST_ROOMS_REQ</a>: 1001&gt;</span>
     </div>
 
             <div class="docstring"><p>Sent from client to server, request to list all rooms in server.</p>
@@ -814,7 +718,7 @@ exchanging messages.</p>
                             <div id="ircOpcodes.LIST_USERS_REQ" class="classattr">
                                             <div class="attr variable"><a class="headerlink" href="#ircOpcodes.LIST_USERS_REQ">#&nbsp;&nbsp</a>
 
-        <span class="name">LIST_USERS_REQ</span><span class="default_value"> = &lt;<a href="#ircOpcodes.LIST_USERS_REQ">ircOpcodes.LIST_USERS_REQ</a>: 1003&gt;</span>
+        <span class="name">LIST_USERS_REQ</span><span class="default_value"> = &lt;<a href="#ircOpcodes.LIST_USERS_REQ">ircOpcodes.LIST_USERS_REQ</a>: 1002&gt;</span>
     </div>
 
             <div class="docstring"><p>Sent from client to server, request to list all users joined to server.</p>
@@ -825,7 +729,7 @@ exchanging messages.</p>
                             <div id="ircOpcodes.JOIN_ROOM_REQ" class="classattr">
                                             <div class="attr variable"><a class="headerlink" href="#ircOpcodes.JOIN_ROOM_REQ">#&nbsp;&nbsp</a>
 
-        <span class="name">JOIN_ROOM_REQ</span><span class="default_value"> = &lt;<a href="#ircOpcodes.JOIN_ROOM_REQ">ircOpcodes.JOIN_ROOM_REQ</a>: 1004&gt;</span>
+        <span class="name">JOIN_ROOM_REQ</span><span class="default_value"> = &lt;<a href="#ircOpcodes.JOIN_ROOM_REQ">ircOpcodes.JOIN_ROOM_REQ</a>: 1003&gt;</span>
     </div>
 
             <div class="docstring"><p>Sent from client to server, request to join specified room(s) on server.</p>
@@ -836,7 +740,7 @@ exchanging messages.</p>
                             <div id="ircOpcodes.SEND_MSG_REQ" class="classattr">
                                             <div class="attr variable"><a class="headerlink" href="#ircOpcodes.SEND_MSG_REQ">#&nbsp;&nbsp</a>
 
-        <span class="name">SEND_MSG_REQ</span><span class="default_value"> = &lt;<a href="#ircOpcodes.SEND_MSG_REQ">ircOpcodes.SEND_MSG_REQ</a>: 1005&gt;</span>
+        <span class="name">SEND_MSG_REQ</span><span class="default_value"> = &lt;<a href="#ircOpcodes.SEND_MSG_REQ">ircOpcodes.SEND_MSG_REQ</a>: 1004&gt;</span>
     </div>
 
             <div class="docstring"><p>Sent from client to server, request to send a message to a room on server.</p>
@@ -847,7 +751,7 @@ exchanging messages.</p>
                             <div id="ircOpcodes.LIST_MEMBERS_OF_ROOM_REQ" class="classattr">
                                             <div class="attr variable"><a class="headerlink" href="#ircOpcodes.LIST_MEMBERS_OF_ROOM_REQ">#&nbsp;&nbsp</a>
 
-        <span class="name">LIST_MEMBERS_OF_ROOM_REQ</span><span class="default_value"> = &lt;<a href="#ircOpcodes.LIST_MEMBERS_OF_ROOM_REQ">ircOpcodes.LIST_MEMBERS_OF_ROOM_REQ</a>: 1006&gt;</span>
+        <span class="name">LIST_MEMBERS_OF_ROOM_REQ</span><span class="default_value"> = &lt;<a href="#ircOpcodes.LIST_MEMBERS_OF_ROOM_REQ">ircOpcodes.LIST_MEMBERS_OF_ROOM_REQ</a>: 1005&gt;</span>
     </div>
 
             <div class="docstring"><p>Sent from client to server, request to list all users joined in a room in the server.</p>
@@ -858,7 +762,7 @@ exchanging messages.</p>
                             <div id="ircOpcodes.MAKE_ROOM_REQ" class="classattr">
                                             <div class="attr variable"><a class="headerlink" href="#ircOpcodes.MAKE_ROOM_REQ">#&nbsp;&nbsp</a>
 
-        <span class="name">MAKE_ROOM_REQ</span><span class="default_value"> = &lt;<a href="#ircOpcodes.MAKE_ROOM_REQ">ircOpcodes.MAKE_ROOM_REQ</a>: 1007&gt;</span>
+        <span class="name">MAKE_ROOM_REQ</span><span class="default_value"> = &lt;<a href="#ircOpcodes.MAKE_ROOM_REQ">ircOpcodes.MAKE_ROOM_REQ</a>: 1006&gt;</span>
     </div>
 
             <div class="docstring"><p>Sent from client to server, request to create a new room on the server.</p>
@@ -869,7 +773,7 @@ exchanging messages.</p>
                             <div id="ircOpcodes.SEND_PRIV_MSG_REQ" class="classattr">
                                             <div class="attr variable"><a class="headerlink" href="#ircOpcodes.SEND_PRIV_MSG_REQ">#&nbsp;&nbsp</a>
 
-        <span class="name">SEND_PRIV_MSG_REQ</span><span class="default_value"> = &lt;<a href="#ircOpcodes.SEND_PRIV_MSG_REQ">ircOpcodes.SEND_PRIV_MSG_REQ</a>: 1008&gt;</span>
+        <span class="name">SEND_PRIV_MSG_REQ</span><span class="default_value"> = &lt;<a href="#ircOpcodes.SEND_PRIV_MSG_REQ">ircOpcodes.SEND_PRIV_MSG_REQ</a>: 1007&gt;</span>
     </div>
 
             <div class="docstring"><p>Sent from client to server, request to send a message to a user on the server.</p>
@@ -880,7 +784,7 @@ exchanging messages.</p>
                             <div id="ircOpcodes.START_PRIV_CHAT_REQ" class="classattr">
                                             <div class="attr variable"><a class="headerlink" href="#ircOpcodes.START_PRIV_CHAT_REQ">#&nbsp;&nbsp</a>
 
-        <span class="name">START_PRIV_CHAT_REQ</span><span class="default_value"> = &lt;<a href="#ircOpcodes.START_PRIV_CHAT_REQ">ircOpcodes.START_PRIV_CHAT_REQ</a>: 1009&gt;</span>
+        <span class="name">START_PRIV_CHAT_REQ</span><span class="default_value"> = &lt;<a href="#ircOpcodes.START_PRIV_CHAT_REQ">ircOpcodes.START_PRIV_CHAT_REQ</a>: 1008&gt;</span>
     </div>
 
             <div class="docstring"><p>Sent from client to server, request to send a message to a user on the server.</p>
@@ -891,7 +795,7 @@ exchanging messages.</p>
                             <div id="ircOpcodes.SEND_BROADCAST_REQ" class="classattr">
                                             <div class="attr variable"><a class="headerlink" href="#ircOpcodes.SEND_BROADCAST_REQ">#&nbsp;&nbsp</a>
 
-        <span class="name">SEND_BROADCAST_REQ</span><span class="default_value"> = &lt;<a href="#ircOpcodes.SEND_BROADCAST_REQ">ircOpcodes.SEND_BROADCAST_REQ</a>: 1010&gt;</span>
+        <span class="name">SEND_BROADCAST_REQ</span><span class="default_value"> = &lt;<a href="#ircOpcodes.SEND_BROADCAST_REQ">ircOpcodes.SEND_BROADCAST_REQ</a>: 1009&gt;</span>
     </div>
 
             <div class="docstring"><p>Sent from client to server, request to send a message to multiple rooms on the server.</p>
@@ -902,7 +806,7 @@ exchanging messages.</p>
                             <div id="ircOpcodes.LEAVE_ROOM_REQ" class="classattr">
                                             <div class="attr variable"><a class="headerlink" href="#ircOpcodes.LEAVE_ROOM_REQ">#&nbsp;&nbsp</a>
 
-        <span class="name">LEAVE_ROOM_REQ</span><span class="default_value"> = &lt;<a href="#ircOpcodes.LEAVE_ROOM_REQ">ircOpcodes.LEAVE_ROOM_REQ</a>: 1011&gt;</span>
+        <span class="name">LEAVE_ROOM_REQ</span><span class="default_value"> = &lt;<a href="#ircOpcodes.LEAVE_ROOM_REQ">ircOpcodes.LEAVE_ROOM_REQ</a>: 1010&gt;</span>
     </div>
 
             <div class="docstring"><p>Sent from client to server, request to leave a room on the server.</p>
@@ -913,7 +817,7 @@ exchanging messages.</p>
                             <div id="ircOpcodes.CLIENT_QUIT_MSG" class="classattr">
                                             <div class="attr variable"><a class="headerlink" href="#ircOpcodes.CLIENT_QUIT_MSG">#&nbsp;&nbsp</a>
 
-        <span class="name">CLIENT_QUIT_MSG</span><span class="default_value"> = &lt;<a href="#ircOpcodes.CLIENT_QUIT_MSG">ircOpcodes.CLIENT_QUIT_MSG</a>: 1012&gt;</span>
+        <span class="name">CLIENT_QUIT_MSG</span><span class="default_value"> = &lt;<a href="#ircOpcodes.CLIENT_QUIT_MSG">ircOpcodes.CLIENT_QUIT_MSG</a>: 1011&gt;</span>
     </div>
 
             <div class="docstring"><p>Sent from client to server, request close the connection on the server.</p>
@@ -935,7 +839,7 @@ exchanging messages.</p>
                             <div id="ircOpcodes.LIST_ROOMS_RESP" class="classattr">
                                             <div class="attr variable"><a class="headerlink" href="#ircOpcodes.LIST_ROOMS_RESP">#&nbsp;&nbsp</a>
 
-        <span class="name">LIST_ROOMS_RESP</span><span class="default_value"> = &lt;<a href="#ircOpcodes.LIST_ROOMS_RESP">ircOpcodes.LIST_ROOMS_RESP</a>: 2002&gt;</span>
+        <span class="name">LIST_ROOMS_RESP</span><span class="default_value"> = &lt;<a href="#ircOpcodes.LIST_ROOMS_RESP">ircOpcodes.LIST_ROOMS_RESP</a>: 2001&gt;</span>
     </div>
 
             <div class="docstring"><p>Sent from server to client, success response to client request to list all rooms in the server.</p>
@@ -946,7 +850,7 @@ exchanging messages.</p>
                             <div id="ircOpcodes.LIST_USERS_RESP" class="classattr">
                                             <div class="attr variable"><a class="headerlink" href="#ircOpcodes.LIST_USERS_RESP">#&nbsp;&nbsp</a>
 
-        <span class="name">LIST_USERS_RESP</span><span class="default_value"> = &lt;<a href="#ircOpcodes.LIST_USERS_RESP">ircOpcodes.LIST_USERS_RESP</a>: 2003&gt;</span>
+        <span class="name">LIST_USERS_RESP</span><span class="default_value"> = &lt;<a href="#ircOpcodes.LIST_USERS_RESP">ircOpcodes.LIST_USERS_RESP</a>: 2002&gt;</span>
     </div>
 
             <div class="docstring"><p>Sent from server to client, success response to client request to list all users in the server.</p>
@@ -957,7 +861,7 @@ exchanging messages.</p>
                             <div id="ircOpcodes.JOIN_ROOM_RESP" class="classattr">
                                             <div class="attr variable"><a class="headerlink" href="#ircOpcodes.JOIN_ROOM_RESP">#&nbsp;&nbsp</a>
 
-        <span class="name">JOIN_ROOM_RESP</span><span class="default_value"> = &lt;<a href="#ircOpcodes.JOIN_ROOM_RESP">ircOpcodes.JOIN_ROOM_RESP</a>: 2004&gt;</span>
+        <span class="name">JOIN_ROOM_RESP</span><span class="default_value"> = &lt;<a href="#ircOpcodes.JOIN_ROOM_RESP">ircOpcodes.JOIN_ROOM_RESP</a>: 2003&gt;</span>
     </div>
 
             <div class="docstring"><p>Sent from server to client, success response to client request to join a room in the server.</p>
@@ -968,7 +872,7 @@ exchanging messages.</p>
                             <div id="ircOpcodes.SEND_MSG_RESP" class="classattr">
                                             <div class="attr variable"><a class="headerlink" href="#ircOpcodes.SEND_MSG_RESP">#&nbsp;&nbsp</a>
 
-        <span class="name">SEND_MSG_RESP</span><span class="default_value"> = &lt;<a href="#ircOpcodes.SEND_MSG_RESP">ircOpcodes.SEND_MSG_RESP</a>: 2005&gt;</span>
+        <span class="name">SEND_MSG_RESP</span><span class="default_value"> = &lt;<a href="#ircOpcodes.SEND_MSG_RESP">ircOpcodes.SEND_MSG_RESP</a>: 2004&gt;</span>
     </div>
 
             <div class="docstring"><p>Sent from server to client, success response to client request to send a message to a room in the server.</p>
@@ -979,7 +883,7 @@ exchanging messages.</p>
                             <div id="ircOpcodes.MAKE_ROOM_RESP" class="classattr">
                                             <div class="attr variable"><a class="headerlink" href="#ircOpcodes.MAKE_ROOM_RESP">#&nbsp;&nbsp</a>
 
-        <span class="name">MAKE_ROOM_RESP</span><span class="default_value"> = &lt;<a href="#ircOpcodes.MAKE_ROOM_RESP">ircOpcodes.MAKE_ROOM_RESP</a>: 2006&gt;</span>
+        <span class="name">MAKE_ROOM_RESP</span><span class="default_value"> = &lt;<a href="#ircOpcodes.MAKE_ROOM_RESP">ircOpcodes.MAKE_ROOM_RESP</a>: 2005&gt;</span>
     </div>
 
             <div class="docstring"><p>Sent from server to client, success response to client request to create a new room on the server.</p>
@@ -990,7 +894,7 @@ exchanging messages.</p>
                             <div id="ircOpcodes.LIST_MEMBERS_OF_ROOM_RESP" class="classattr">
                                             <div class="attr variable"><a class="headerlink" href="#ircOpcodes.LIST_MEMBERS_OF_ROOM_RESP">#&nbsp;&nbsp</a>
 
-        <span class="name">LIST_MEMBERS_OF_ROOM_RESP</span><span class="default_value"> = &lt;<a href="#ircOpcodes.LIST_MEMBERS_OF_ROOM_RESP">ircOpcodes.LIST_MEMBERS_OF_ROOM_RESP</a>: 2007&gt;</span>
+        <span class="name">LIST_MEMBERS_OF_ROOM_RESP</span><span class="default_value"> = &lt;<a href="#ircOpcodes.LIST_MEMBERS_OF_ROOM_RESP">ircOpcodes.LIST_MEMBERS_OF_ROOM_RESP</a>: 2006&gt;</span>
     </div>
 
             <div class="docstring"><p>Sent from server to client, success response to client request to list all users in a room on the server.</p>
@@ -1001,7 +905,7 @@ exchanging messages.</p>
                             <div id="ircOpcodes.SEND_PRIV_MSG_RESP" class="classattr">
                                             <div class="attr variable"><a class="headerlink" href="#ircOpcodes.SEND_PRIV_MSG_RESP">#&nbsp;&nbsp</a>
 
-        <span class="name">SEND_PRIV_MSG_RESP</span><span class="default_value"> = &lt;<a href="#ircOpcodes.SEND_PRIV_MSG_RESP">ircOpcodes.SEND_PRIV_MSG_RESP</a>: 2008&gt;</span>
+        <span class="name">SEND_PRIV_MSG_RESP</span><span class="default_value"> = &lt;<a href="#ircOpcodes.SEND_PRIV_MSG_RESP">ircOpcodes.SEND_PRIV_MSG_RESP</a>: 2007&gt;</span>
     </div>
 
             <div class="docstring"><p>Sent from server to client, success response to client request to send a private message to another client in the server.</p>
@@ -1012,7 +916,7 @@ exchanging messages.</p>
                             <div id="ircOpcodes.START_PRIV_CHAT_RESP" class="classattr">
                                             <div class="attr variable"><a class="headerlink" href="#ircOpcodes.START_PRIV_CHAT_RESP">#&nbsp;&nbsp</a>
 
-        <span class="name">START_PRIV_CHAT_RESP</span><span class="default_value"> = &lt;<a href="#ircOpcodes.START_PRIV_CHAT_RESP">ircOpcodes.START_PRIV_CHAT_RESP</a>: 2009&gt;</span>
+        <span class="name">START_PRIV_CHAT_RESP</span><span class="default_value"> = &lt;<a href="#ircOpcodes.START_PRIV_CHAT_RESP">ircOpcodes.START_PRIV_CHAT_RESP</a>: 2008&gt;</span>
     </div>
 
             <div class="docstring"><p>Sent from server to client, success response to client request to start a private chat with client in the server.</p>
@@ -1023,7 +927,7 @@ exchanging messages.</p>
                             <div id="ircOpcodes.SEND_BROADCAST_RESP" class="classattr">
                                             <div class="attr variable"><a class="headerlink" href="#ircOpcodes.SEND_BROADCAST_RESP">#&nbsp;&nbsp</a>
 
-        <span class="name">SEND_BROADCAST_RESP</span><span class="default_value"> = &lt;<a href="#ircOpcodes.SEND_BROADCAST_RESP">ircOpcodes.SEND_BROADCAST_RESP</a>: 2010&gt;</span>
+        <span class="name">SEND_BROADCAST_RESP</span><span class="default_value"> = &lt;<a href="#ircOpcodes.SEND_BROADCAST_RESP">ircOpcodes.SEND_BROADCAST_RESP</a>: 2009&gt;</span>
     </div>
 
             <div class="docstring"><p>Sent from server to client, success response to client request to send a message to multiple rooms in the server.</p>
@@ -1034,7 +938,7 @@ exchanging messages.</p>
                             <div id="ircOpcodes.FORWARD_MESSAGE" class="classattr">
                                             <div class="attr variable"><a class="headerlink" href="#ircOpcodes.FORWARD_MESSAGE">#&nbsp;&nbsp</a>
 
-        <span class="name">FORWARD_MESSAGE</span><span class="default_value"> = &lt;<a href="#ircOpcodes.FORWARD_MESSAGE">ircOpcodes.FORWARD_MESSAGE</a>: 2011&gt;</span>
+        <span class="name">FORWARD_MESSAGE</span><span class="default_value"> = &lt;<a href="#ircOpcodes.FORWARD_MESSAGE">ircOpcodes.FORWARD_MESSAGE</a>: 2010&gt;</span>
     </div>
 
             <div class="docstring"><p>Sent from server to client, forwarded message to a client in a room in the server.</p>
@@ -1045,7 +949,7 @@ exchanging messages.</p>
                             <div id="ircOpcodes.FORWARD_PRIVATE_MESSAGE" class="classattr">
                                             <div class="attr variable"><a class="headerlink" href="#ircOpcodes.FORWARD_PRIVATE_MESSAGE">#&nbsp;&nbsp</a>
 
-        <span class="name">FORWARD_PRIVATE_MESSAGE</span><span class="default_value"> = &lt;<a href="#ircOpcodes.FORWARD_PRIVATE_MESSAGE">ircOpcodes.FORWARD_PRIVATE_MESSAGE</a>: 2012&gt;</span>
+        <span class="name">FORWARD_PRIVATE_MESSAGE</span><span class="default_value"> = &lt;<a href="#ircOpcodes.FORWARD_PRIVATE_MESSAGE">ircOpcodes.FORWARD_PRIVATE_MESSAGE</a>: 2011&gt;</span>
     </div>
 
             <div class="docstring"><p>Sent from server to client, forwarded private message to a client from another client in the server.</p>
@@ -1059,7 +963,7 @@ exchanging messages.</p>
         <span class="name">IRC_ERR</span><span class="default_value"> = &lt;<a href="#ircOpcodes.IRC_ERR">ircOpcodes.IRC_ERR</a>: 3000&gt;</span>
     </div>
 
-            <div class="docstring"><p>Catchall generic error encounterd opcode.</p>
+            <div class="docstring"><p>Catchall generic error encountered opcode.</p>
 </div>
 
 
@@ -1078,7 +982,7 @@ exchanging messages.</p>
                             <div id="ircOpcodes.ERR_ILLEGAL_NAME" class="classattr">
                                             <div class="attr variable"><a class="headerlink" href="#ircOpcodes.ERR_ILLEGAL_NAME">#&nbsp;&nbsp</a>
 
-        <span class="name">ERR_ILLEGAL_NAME</span><span class="default_value"> = &lt;<a href="#ircOpcodes.ERR_ILLEGAL_NAME">ircOpcodes.ERR_ILLEGAL_NAME</a>: 3004&gt;</span>
+        <span class="name">ERR_ILLEGAL_NAME</span><span class="default_value"> = &lt;<a href="#ircOpcodes.ERR_ILLEGAL_NAME">ircOpcodes.ERR_ILLEGAL_NAME</a>: 3002&gt;</span>
     </div>
 
             <div class="docstring"><p>Error code to indicate illegal characters sent when trying to register a name of a room or user.</p>
@@ -1089,7 +993,7 @@ exchanging messages.</p>
                             <div id="ircOpcodes.ERR_TOO_MANY_USERS" class="classattr">
                                             <div class="attr variable"><a class="headerlink" href="#ircOpcodes.ERR_TOO_MANY_USERS">#&nbsp;&nbsp</a>
 
-        <span class="name">ERR_TOO_MANY_USERS</span><span class="default_value"> = &lt;<a href="#ircOpcodes.ERR_TOO_MANY_USERS">ircOpcodes.ERR_TOO_MANY_USERS</a>: 3006&gt;</span>
+        <span class="name">ERR_TOO_MANY_USERS</span><span class="default_value"> = &lt;<a href="#ircOpcodes.ERR_TOO_MANY_USERS">ircOpcodes.ERR_TOO_MANY_USERS</a>: 3003&gt;</span>
     </div>
 
             <div class="docstring"><p>Error code to indicate that a room is full.</p>
@@ -1100,7 +1004,7 @@ exchanging messages.</p>
                             <div id="ircOpcodes.ERR_RECIPIENT_DOES_NOT_EXIST" class="classattr">
                                             <div class="attr variable"><a class="headerlink" href="#ircOpcodes.ERR_RECIPIENT_DOES_NOT_EXIST">#&nbsp;&nbsp</a>
 
-        <span class="name">ERR_RECIPIENT_DOES_NOT_EXIST</span><span class="default_value"> = &lt;<a href="#ircOpcodes.ERR_RECIPIENT_DOES_NOT_EXIST">ircOpcodes.ERR_RECIPIENT_DOES_NOT_EXIST</a>: 3008&gt;</span>
+        <span class="name">ERR_RECIPIENT_DOES_NOT_EXIST</span><span class="default_value"> = &lt;<a href="#ircOpcodes.ERR_RECIPIENT_DOES_NOT_EXIST">ircOpcodes.ERR_RECIPIENT_DOES_NOT_EXIST</a>: 3004&gt;</span>
     </div>
 
             <div class="docstring"><p>Error code to indicate an that a client does not exist in the server when trying to send a packet to the client.</p>
@@ -1111,7 +1015,7 @@ exchanging messages.</p>
                             <div id="ircOpcodes.ROOM_DOES_NOT_EXIST" class="classattr">
                                             <div class="attr variable"><a class="headerlink" href="#ircOpcodes.ROOM_DOES_NOT_EXIST">#&nbsp;&nbsp</a>
 
-        <span class="name">ROOM_DOES_NOT_EXIST</span><span class="default_value"> = &lt;<a href="#ircOpcodes.ROOM_DOES_NOT_EXIST">ircOpcodes.ROOM_DOES_NOT_EXIST</a>: 3010&gt;</span>
+        <span class="name">ROOM_DOES_NOT_EXIST</span><span class="default_value"> = &lt;<a href="#ircOpcodes.ROOM_DOES_NOT_EXIST">ircOpcodes.ROOM_DOES_NOT_EXIST</a>: 3005&gt;</span>
     </div>
 
             <div class="docstring"><p>Error code to indicate an attempt was made to interact with a room that is not in the server.</p>
@@ -1122,7 +1026,7 @@ exchanging messages.</p>
                             <div id="ircOpcodes.ERR_ROOM_ALREADY_EXISTS" class="classattr">
                                             <div class="attr variable"><a class="headerlink" href="#ircOpcodes.ERR_ROOM_ALREADY_EXISTS">#&nbsp;&nbsp</a>
 
-        <span class="name">ERR_ROOM_ALREADY_EXISTS</span><span class="default_value"> = &lt;<a href="#ircOpcodes.ERR_ROOM_ALREADY_EXISTS">ircOpcodes.ERR_ROOM_ALREADY_EXISTS</a>: 3011&gt;</span>
+        <span class="name">ERR_ROOM_ALREADY_EXISTS</span><span class="default_value"> = &lt;<a href="#ircOpcodes.ERR_ROOM_ALREADY_EXISTS">ircOpcodes.ERR_ROOM_ALREADY_EXISTS</a>: 3006&gt;</span>
     </div>
 
             <div class="docstring"><p>Error code to indicate a room already exists when trying to create a new room.</p>
@@ -1133,7 +1037,7 @@ exchanging messages.</p>
                             <div id="ircOpcodes.ERR_USER_ALREADY_IN_ROOM" class="classattr">
                                             <div class="attr variable"><a class="headerlink" href="#ircOpcodes.ERR_USER_ALREADY_IN_ROOM">#&nbsp;&nbsp</a>
 
-        <span class="name">ERR_USER_ALREADY_IN_ROOM</span><span class="default_value"> = &lt;<a href="#ircOpcodes.ERR_USER_ALREADY_IN_ROOM">ircOpcodes.ERR_USER_ALREADY_IN_ROOM</a>: 3012&gt;</span>
+        <span class="name">ERR_USER_ALREADY_IN_ROOM</span><span class="default_value"> = &lt;<a href="#ircOpcodes.ERR_USER_ALREADY_IN_ROOM">ircOpcodes.ERR_USER_ALREADY_IN_ROOM</a>: 3007&gt;</span>
     </div>
 
             <div class="docstring"><p>Error code to indicate to a client that they are already joined to a room.</p>
@@ -1144,28 +1048,34 @@ exchanging messages.</p>
                             <div id="ircOpcodes.ERR_ILLEGAL_NAME_LENGTH" class="classattr">
                                             <div class="attr variable"><a class="headerlink" href="#ircOpcodes.ERR_ILLEGAL_NAME_LENGTH">#&nbsp;&nbsp</a>
 
-        <span class="name">ERR_ILLEGAL_NAME_LENGTH</span><span class="default_value"> = &lt;<a href="#ircOpcodes.ERR_ILLEGAL_NAME_LENGTH">ircOpcodes.ERR_ILLEGAL_NAME_LENGTH</a>: 3013&gt;</span>
+        <span class="name">ERR_ILLEGAL_NAME_LENGTH</span><span class="default_value"> = &lt;<a href="#ircOpcodes.ERR_ILLEGAL_NAME_LENGTH">ircOpcodes.ERR_ILLEGAL_NAME_LENGTH</a>: 3008&gt;</span>
     </div>
 
-    
+            <div class="docstring"><p>Error code to indicate that a username's length is too long.</p>
+</div>
+
 
                             </div>
                             <div id="ircOpcodes.ERR_ILLEGAL_ROOM_NAME_LENGTH" class="classattr">
                                             <div class="attr variable"><a class="headerlink" href="#ircOpcodes.ERR_ILLEGAL_ROOM_NAME_LENGTH">#&nbsp;&nbsp</a>
 
-        <span class="name">ERR_ILLEGAL_ROOM_NAME_LENGTH</span><span class="default_value"> = &lt;<a href="#ircOpcodes.ERR_ILLEGAL_ROOM_NAME_LENGTH">ircOpcodes.ERR_ILLEGAL_ROOM_NAME_LENGTH</a>: 3014&gt;</span>
+        <span class="name">ERR_ILLEGAL_ROOM_NAME_LENGTH</span><span class="default_value"> = &lt;<a href="#ircOpcodes.ERR_ILLEGAL_ROOM_NAME_LENGTH">ircOpcodes.ERR_ILLEGAL_ROOM_NAME_LENGTH</a>: 3009&gt;</span>
     </div>
 
-    
+            <div class="docstring"><p>Error code to indicate that a room name's length is too long or too short.</p>
+</div>
+
 
                             </div>
                             <div id="ircOpcodes.ERR_ILLEGAL_MESSAGE_LENGTH" class="classattr">
                                             <div class="attr variable"><a class="headerlink" href="#ircOpcodes.ERR_ILLEGAL_MESSAGE_LENGTH">#&nbsp;&nbsp</a>
 
-        <span class="name">ERR_ILLEGAL_MESSAGE_LENGTH</span><span class="default_value"> = &lt;<a href="#ircOpcodes.ERR_ILLEGAL_MESSAGE_LENGTH">ircOpcodes.ERR_ILLEGAL_MESSAGE_LENGTH</a>: 3015&gt;</span>
+        <span class="name">ERR_ILLEGAL_MESSAGE_LENGTH</span><span class="default_value"> = &lt;<a href="#ircOpcodes.ERR_ILLEGAL_MESSAGE_LENGTH">ircOpcodes.ERR_ILLEGAL_MESSAGE_LENGTH</a>: 3010&gt;</span>
     </div>
 
-    
+            <div class="docstring"><p>Error code to indicate a relayed message is too long</p>
+</div>
+
 
                             </div>
                             <div class="inherited">

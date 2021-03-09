@@ -134,7 +134,7 @@ client    </h1>
 <span class="c1"># import capability to have multiple threads, allows us to handle sending and receiving at the same time.</span>
 <span class="kn">from</span> <span class="nn">_thread</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">import</span> <span class="nn">threading</span>
-
+<span class="kn">import</span> <span class="nn">time</span>
 
 <span class="k">class</span> <span class="nc">client</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -158,7 +158,7 @@ client    </h1>
         <span class="bp">self</span><span class="o">.</span><span class="n">knownUsers</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">currentRoomUsers</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">serverPort</span> <span class="o">=</span> <span class="mi">6667</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">serverIP</span> <span class="o">=</span> <span class="s2">&quot;127.0.0.1&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">serverIP</span> <span class="o">=</span> <span class="s2">&quot;192.168.1.6&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">buffSize</span> <span class="o">=</span> <span class="mi">4096</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">wantToQuit</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
@@ -262,7 +262,6 @@ client    </h1>
         <span class="sd">&quot;&quot;&quot;This method is only used by the secondary, &quot;listening&quot; thread for the client</span>
 <span class="sd">        It takes a packet as its sole argument. This method then checks the packet&#39;s opcode to determine</span>
 <span class="sd">        how to handle the packet.&quot;&quot;&quot;</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;------received from server: </span><span class="si">{</span><span class="n">serverResponse</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
         <span class="c1"># FORWARD_MESSAGE</span>
         <span class="c1"># A message was received from another client who is also subscribed to a room</span>
@@ -278,7 +277,7 @@ client    </h1>
         <span class="c1"># for each successful message sent, adding those messages to their corresponding room.</span>
         <span class="k">elif</span><span class="p">(</span><span class="n">serverResponse</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">SEND_BROADCAST_RESP</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
-            <span class="k">for</span> <span class="n">room</span> <span class="ow">in</span> <span class="n">serverResponse</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">receiverName</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">room</span> <span class="ow">in</span> <span class="n">serverResponse</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">receiverName</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">messageDictionary</span><span class="p">[</span><span class="n">room</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                     <span class="s2">&quot;Me: &quot;</span> <span class="o">+</span> <span class="n">serverResponse</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">messageBody</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
@@ -310,7 +309,7 @@ client    </h1>
         <span class="c1"># replaced with an updated one with every call to this method.</span>
         <span class="k">elif</span><span class="p">(</span><span class="n">serverResponse</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_MEMBERS_OF_ROOM_RESP</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">currentRoomUsers</span> <span class="o">=</span> <span class="n">serverResponse</span><span class="o">.</span><span class="n">payload</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">currentRoomUsers</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">serverResponse</span><span class="o">.</span><span class="n">payload</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
 
         <span class="c1"># MAKE_ROOM_RESP</span>
@@ -351,12 +350,13 @@ client    </h1>
                 <span class="s2">&quot;Me: &quot;</span> <span class="o">+</span> <span class="n">serverResponse</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">messageBody</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
 
-        <span class="c1"># IRC_OPCODE_JOIN_ROOM_RESP</span>
+        <span class="c1"># JOIN_ROOM_RESP</span>
         <span class="c1"># Client was able to successfully join their desired room.</span>
         <span class="c1"># a new entry in the message dictionary is made for that room and</span>
         <span class="c1"># the user is told of the success</span>
-        <span class="k">elif</span><span class="p">(</span><span class="n">serverResponse</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">IRC_OPCODE_JOIN_ROOM_RESP</span><span class="p">):</span>
+        <span class="k">elif</span><span class="p">(</span><span class="n">serverResponse</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">JOIN_ROOM_RESP</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Server sent back </span><span class="si">{</span><span class="n">serverResponse</span><span class="o">.</span><span class="n">payload</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">room</span> <span class="ow">in</span> <span class="n">serverResponse</span><span class="o">.</span><span class="n">payload</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">room</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">messageDictionary</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">messageDictionary</span><span class="p">[</span><span class="n">room</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -439,9 +439,12 @@ client    </h1>
         <span class="sd">&quot;&quot;&quot;This method sends a request to the server asking it for a list of all public rooms that the server is</span>
 <span class="sd">        keeping track of.&quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">clientSocket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
                 <span class="n">ircPacket</span><span class="p">(</span><span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_ROOMS_REQ</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="s2">&quot;&quot;</span><span class="p">)))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
         <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Sorry, it seems as though you have lost connection.&quot;</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error receivced: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;We are ending the program. Please try reconnecting again.&quot;</span><span class="p">)</span>
@@ -450,9 +453,12 @@ client    </h1>
     <span class="k">def</span> <span class="nf">getAllUsers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;This method sends a request to the server asking it for a list of all connected clients.&quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">clientSocket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
                 <span class="n">ircPacket</span><span class="p">(</span><span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_USERS_REQ</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="s2">&quot;&quot;</span><span class="p">)))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
         <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
             <span class="nb">print</span><span class="p">(</span>
                 <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Sorry, it seems as though you have lost connection. In getAllUsers()&quot;</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error receivced: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -473,9 +479,11 @@ client    </h1>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">listPublicRooms</span><span class="p">()</span>
         <span class="n">strDesiredRooms</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;Which room numbers do you wish to join?: &quot;</span><span class="p">)</span>
-        <span class="n">indexDesiredRooms</span> <span class="o">=</span> <span class="n">strDesiredRooms</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">indexDesiredRooms</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">indexDesiredRooms</span> <span class="o">=</span> <span class="n">strDesiredRooms</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">indexDesiredRooms</span><span class="p">)</span>
+        <span class="n">desiredRooms</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">indexDesiredRooms</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="n">numRooms</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">indexDesiredRooms</span><span class="p">)</span>
             <span class="k">while</span><span class="p">(</span><span class="n">i</span> <span class="o">&lt;</span> <span class="n">numRooms</span><span class="p">):</span>
@@ -483,10 +491,13 @@ client    </h1>
                 <span class="n">indexDesiredRooms</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">strindex</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
                 <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
 
-            <span class="n">desiredRooms</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
             <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">indexDesiredRooms</span><span class="p">:</span>
+        
                 <span class="n">desiredRooms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">knownRooms</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
-
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+                
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;desired rooms: </span><span class="si">{</span><span class="n">desiredRooms</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="n">joinRoomPayload</span> <span class="o">=</span> <span class="n">roomPayload</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">desiredRooms</span><span class="p">)</span>
         <span class="n">payloadLength</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">desiredRooms</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="n">joinRoomHeader</span> <span class="o">=</span> <span class="n">ircHeader</span><span class="p">(</span>
@@ -509,8 +520,8 @@ client    </h1>
         <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">desiredRoom</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">messageDictionary</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">currentRoom</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">desiredRoom</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">showCurrentRoomMessages</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
@@ -571,30 +582,39 @@ client    </h1>
         <span class="sd">&quot;&quot;&quot;The method is for when the client desires to quit the chat program. It sends a request to the server to leave&quot;&quot;&quot;</span>
         <span class="n">header</span> <span class="o">=</span> <span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">CLIENT_QUIT_MSG</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
         <span class="n">pkt</span> <span class="o">=</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">clientSocket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">pkt</span><span class="p">))</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">clientSocket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">pkt</span><span class="p">))</span>
+        <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;error occurred: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">listUsers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;This method lists the current users of the room the client is currently in.&quot;&quot;&quot;</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Here are the users in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">currentRoom</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">currentRoomUsers</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">user</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Me!&quot;</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">getUsersInCurrentRoom</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;This method sends a request to the server for a list of users </span>
 <span class="sd">            who are in the room that the requesting client currently is in&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
-        <span class="n">listUsersPayload</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">currentRoom</span>
-        <span class="n">length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">currentRoom</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
-        <span class="n">listUsersHeader</span> <span class="o">=</span> <span class="n">ircHeader</span><span class="p">(</span>
-            <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_MEMBERS_OF_ROOM_REQ</span><span class="p">,</span> <span class="n">length</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;private: &quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">currentRoom</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+            <span class="k">return</span>
+        <span class="n">listUsersPayload</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">currentRoom</span><span class="p">)</span>
+        <span class="n">length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">listUsersPayload</span><span class="p">)</span>
+        <span class="n">listUsersHeader</span> <span class="o">=</span> <span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_MEMBERS_OF_ROOM_REQ</span><span class="p">,</span> <span class="n">length</span><span class="p">)</span>
+        <span class="n">pkt</span> <span class="o">=</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">listUsersHeader</span><span class="p">,</span> <span class="n">listUsersPayload</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">clientSocket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
-                <span class="n">ircPacket</span><span class="p">(</span><span class="n">listUsersHeader</span><span class="p">,</span> <span class="n">listUsersPayload</span><span class="p">)))</span>
+            
+            <span class="bp">self</span><span class="o">.</span><span class="n">clientSocket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">pkt</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
         <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Sorry, it seems as though you have lost connection.&quot;</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error receivced: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;We are ending the program. Please try reconnecting again.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -607,15 +627,15 @@ client    </h1>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;------------------------------ to send a message to the current room, just type it and send&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-help&#39;            or &#39;-h&#39;     to see all of these commands again.&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-privatemessage&#39;  or &#39;-pm&#39;    to send a private message to another user.&quot;</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span>
-            <span class="s2">&quot;&#39;-broadcast&#39;       or &#39;-bm&#39;    to send a broadcast message to several rooms.&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-broadcast&#39;       or &#39;-bm&#39;    to send a broadcast message to several rooms.&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-listmessages&#39;    or &#39;-lm&#39;    to see all of the messages in the room you are currently in.&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-joinroom&#39;        or &#39;-j&#39;     to join a public chat room.&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-listusers&#39;       or &#39;-lu&#39;    to see who else is in the room you are in.&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-makeroom&#39;        or &#39;-mkrm&#39;  to make a new chat room. &quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-changeroom&#39;      or &#39;-cr&#39;    to change to a room you are joined. &quot;</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-listpublicrooms&#39; or &#39;-lpr&#39;    to see all available rooms.&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-listpublicrooms&#39; or &#39;-lpr&#39;   to see all available rooms.&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-myrooms&#39;         or &#39;-myrms&#39; to see the rooms you are registered in. &quot;</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-leaveroom&#39;       or &#39;-lm&#39;    to unsubscribe from your current room.&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-leaveroom&#39;       or &#39;-lrm&#39;    to unsubscribe from your current room.&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-quit&#39;            or &#39;-q&#39;     to end the program. &quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">handleInput</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -628,10 +648,15 @@ client    </h1>
 
             <span class="c1"># Upon every iteration, the state of known rooms, all known users, and all users in the</span>
             <span class="c1"># clients current room are updated.</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">getAllRooms</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">getAllUsers</span><span class="p">()</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">getUsersInCurrentRoom</span><span class="p">()</span>
-            <span class="n">userMessage</span> <span class="o">=</span> <span class="nb">str</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="nb">input</span><span class="p">(</span><span class="s2">&quot;Message: &quot;</span><span class="p">))</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">getAllRooms</span><span class="p">()</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">getAllUsers</span><span class="p">()</span>
+
+            <span class="n">messageBody</span><span class="o">=</span><span class="nb">input</span><span class="p">(</span><span class="s2">&quot;Message: &quot;</span><span class="p">)</span>
+            <span class="n">userMessage</span> <span class="o">=</span> <span class="nb">str</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">messageBody</span><span class="p">)</span>
 
             <span class="k">if</span><span class="p">(</span><span class="n">userMessage</span> <span class="o">==</span> <span class="s2">&quot;-quit&quot;</span> <span class="ow">or</span> <span class="n">userMessage</span> <span class="o">==</span> <span class="s2">&quot;-q&quot;</span><span class="p">):</span>
                 <span class="n">userDone</span> <span class="o">=</span> <span class="kc">True</span>
@@ -650,6 +675,9 @@ client    </h1>
             <span class="k">elif</span><span class="p">(</span><span class="n">userMessage</span> <span class="o">==</span> <span class="s2">&quot;-listpublicrooms&quot;</span> <span class="ow">or</span> <span class="n">userMessage</span> <span class="o">==</span> <span class="s2">&quot;-lpr&quot;</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">listPublicRooms</span><span class="p">()</span>
 
+            <span class="k">elif</span><span class="p">(</span><span class="n">userMessage</span> <span class="o">==</span> <span class="s2">&quot;-joinroom&quot;</span> <span class="ow">or</span> <span class="n">userMessage</span> <span class="o">==</span> <span class="s1">&#39;-j&#39;</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">joinRoom</span><span class="p">()</span>
+
             <span class="k">elif</span><span class="p">(</span><span class="n">userMessage</span> <span class="o">==</span> <span class="s2">&quot;-myrooms&quot;</span> <span class="ow">or</span> <span class="n">userMessage</span> <span class="o">==</span> <span class="s2">&quot;-myrms&quot;</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">listMyRooms</span><span class="p">()</span>
 
@@ -662,7 +690,7 @@ client    </h1>
                 <span class="bp">self</span><span class="o">.</span><span class="n">sendPrivateMessage</span><span class="p">()</span>
 
             <span class="c1"># leave room</span>
-            <span class="k">elif</span><span class="p">(</span><span class="n">userMessage</span> <span class="o">==</span> <span class="s2">&quot;-leave&quot;</span><span class="p">):</span>
+            <span class="k">elif</span><span class="p">(</span><span class="n">userMessage</span> <span class="o">==</span> <span class="s2">&quot;-leaveroom&quot;</span> <span class="ow">or</span> <span class="n">userMessage</span> <span class="o">==</span> <span class="s2">&quot;-lrm&quot;</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">leaveRoom</span><span class="p">()</span>
 
             <span class="c1"># send broadcast message</span>
@@ -675,7 +703,7 @@ client    </h1>
 
             <span class="c1"># send message to room</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">sendMessage</span><span class="p">(</span><span class="n">userMessage</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">sendMessage</span><span class="p">(</span><span class="n">messageBody</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">listMyRooms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;This method displays all of the rooms a user is currently joined to. &quot;&quot;&quot;</span>
@@ -699,18 +727,18 @@ client    </h1>
             <span class="n">temp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">currentRoom</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">desiredUser</span> <span class="o">=</span> <span class="n">temp</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
             <span class="n">messageHeader</span> <span class="o">=</span> <span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">SEND_PRIV_MSG_REQ</span><span class="p">,</span> <span class="n">length</span><span class="p">)</span>
-            <span class="n">messagePayload</span> <span class="o">=</span> <span class="n">messagePayload</span><span class="p">(</span>
+            <span class="n">msgPayload</span> <span class="o">=</span> <span class="n">messagePayload</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">desiredUser</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
             <span class="n">messageHeader</span> <span class="o">=</span> <span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">SEND_MSG_REQ</span><span class="p">,</span> <span class="n">length</span><span class="p">)</span>
-            <span class="n">messagePayload</span> <span class="o">=</span> <span class="n">messagePayload</span><span class="p">(</span>
+            <span class="n">msgPayload</span> <span class="o">=</span> <span class="n">messagePayload</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">currentRoom</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">clientSocket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
-                <span class="n">ircPacket</span><span class="p">(</span><span class="n">messageHeader</span><span class="p">,</span> <span class="n">messagePayload</span><span class="p">)))</span>
+                <span class="n">ircPacket</span><span class="p">(</span><span class="n">messageHeader</span><span class="p">,</span> <span class="n">msgPayload</span><span class="p">)))</span>
         <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Sorry, it seems as though you have lost connection.&quot;</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;error received: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -737,11 +765,12 @@ client    </h1>
         <span class="c1"># look to see if private chat thread exists</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
         <span class="k">if</span> <span class="sa">f</span><span class="s2">&quot;private: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">desiredUser</span><span class="si">}</span><span class="s2">&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">messageDictionary</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
             <span class="n">privateMessageRecipient</span> <span class="o">=</span> <span class="s2">&quot;private: &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">desiredUser</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">enterPrivateChat</span><span class="p">(</span><span class="n">privateMessageRecipient</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;You are now chatting with </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">desiredUser</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">showCurrentRoomMessages</span><span class="p">()</span>
+        
 
         <span class="c1"># start new chat thread</span>
         <span class="k">else</span><span class="p">:</span>
@@ -750,6 +779,7 @@ client    </h1>
                 <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">START_PRIV_CHAT_REQ</span><span class="p">,</span> <span class="n">length</span><span class="p">)</span>
             <span class="n">privateMessagePayload</span> <span class="o">=</span> <span class="n">messagePayload</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">desiredUser</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">clientSocket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
                     <span class="n">ircPacket</span><span class="p">(</span><span class="n">privateMessageHeader</span><span class="p">,</span> <span class="n">privateMessagePayload</span><span class="p">)))</span>
@@ -757,7 +787,7 @@ client    </h1>
                 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Sorry, it seems as though you have lost connection.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;We are ending the program. Please try reconnecting again.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="n">quit</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+            <span class="k">return</span> 
 
     <span class="k">def</span> <span class="nf">showCurrentRoomMessages</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;This method displays all of the stored messages in the current room the client is in.&quot;&quot;&quot;</span>
@@ -847,7 +877,7 @@ client    </h1>
         <span class="bp">self</span><span class="o">.</span><span class="n">knownUsers</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">currentRoomUsers</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">serverPort</span> <span class="o">=</span> <span class="mi">6667</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">serverIP</span> <span class="o">=</span> <span class="s2">&quot;127.0.0.1&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">serverIP</span> <span class="o">=</span> <span class="s2">&quot;192.168.1.6&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">buffSize</span> <span class="o">=</span> <span class="mi">4096</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">wantToQuit</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
@@ -951,7 +981,6 @@ client    </h1>
         <span class="sd">&quot;&quot;&quot;This method is only used by the secondary, &quot;listening&quot; thread for the client</span>
 <span class="sd">        It takes a packet as its sole argument. This method then checks the packet&#39;s opcode to determine</span>
 <span class="sd">        how to handle the packet.&quot;&quot;&quot;</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;------received from server: </span><span class="si">{</span><span class="n">serverResponse</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
         <span class="c1"># FORWARD_MESSAGE</span>
         <span class="c1"># A message was received from another client who is also subscribed to a room</span>
@@ -967,7 +996,7 @@ client    </h1>
         <span class="c1"># for each successful message sent, adding those messages to their corresponding room.</span>
         <span class="k">elif</span><span class="p">(</span><span class="n">serverResponse</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">SEND_BROADCAST_RESP</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
-            <span class="k">for</span> <span class="n">room</span> <span class="ow">in</span> <span class="n">serverResponse</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">receiverName</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">room</span> <span class="ow">in</span> <span class="n">serverResponse</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">receiverName</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">messageDictionary</span><span class="p">[</span><span class="n">room</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                     <span class="s2">&quot;Me: &quot;</span> <span class="o">+</span> <span class="n">serverResponse</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">messageBody</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
@@ -999,7 +1028,7 @@ client    </h1>
         <span class="c1"># replaced with an updated one with every call to this method.</span>
         <span class="k">elif</span><span class="p">(</span><span class="n">serverResponse</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_MEMBERS_OF_ROOM_RESP</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">currentRoomUsers</span> <span class="o">=</span> <span class="n">serverResponse</span><span class="o">.</span><span class="n">payload</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">currentRoomUsers</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">serverResponse</span><span class="o">.</span><span class="n">payload</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
 
         <span class="c1"># MAKE_ROOM_RESP</span>
@@ -1040,12 +1069,13 @@ client    </h1>
                 <span class="s2">&quot;Me: &quot;</span> <span class="o">+</span> <span class="n">serverResponse</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">messageBody</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
 
-        <span class="c1"># IRC_OPCODE_JOIN_ROOM_RESP</span>
+        <span class="c1"># JOIN_ROOM_RESP</span>
         <span class="c1"># Client was able to successfully join their desired room.</span>
         <span class="c1"># a new entry in the message dictionary is made for that room and</span>
         <span class="c1"># the user is told of the success</span>
-        <span class="k">elif</span><span class="p">(</span><span class="n">serverResponse</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">IRC_OPCODE_JOIN_ROOM_RESP</span><span class="p">):</span>
+        <span class="k">elif</span><span class="p">(</span><span class="n">serverResponse</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">JOIN_ROOM_RESP</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Server sent back </span><span class="si">{</span><span class="n">serverResponse</span><span class="o">.</span><span class="n">payload</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">room</span> <span class="ow">in</span> <span class="n">serverResponse</span><span class="o">.</span><span class="n">payload</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">room</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">messageDictionary</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">messageDictionary</span><span class="p">[</span><span class="n">room</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -1128,9 +1158,12 @@ client    </h1>
         <span class="sd">&quot;&quot;&quot;This method sends a request to the server asking it for a list of all public rooms that the server is</span>
 <span class="sd">        keeping track of.&quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">clientSocket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
                 <span class="n">ircPacket</span><span class="p">(</span><span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_ROOMS_REQ</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="s2">&quot;&quot;</span><span class="p">)))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
         <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Sorry, it seems as though you have lost connection.&quot;</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error receivced: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;We are ending the program. Please try reconnecting again.&quot;</span><span class="p">)</span>
@@ -1139,9 +1172,12 @@ client    </h1>
     <span class="k">def</span> <span class="nf">getAllUsers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;This method sends a request to the server asking it for a list of all connected clients.&quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">clientSocket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
                 <span class="n">ircPacket</span><span class="p">(</span><span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_USERS_REQ</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="s2">&quot;&quot;</span><span class="p">)))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
         <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
             <span class="nb">print</span><span class="p">(</span>
                 <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Sorry, it seems as though you have lost connection. In getAllUsers()&quot;</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error receivced: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -1162,9 +1198,11 @@ client    </h1>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">listPublicRooms</span><span class="p">()</span>
         <span class="n">strDesiredRooms</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;Which room numbers do you wish to join?: &quot;</span><span class="p">)</span>
-        <span class="n">indexDesiredRooms</span> <span class="o">=</span> <span class="n">strDesiredRooms</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">indexDesiredRooms</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">indexDesiredRooms</span> <span class="o">=</span> <span class="n">strDesiredRooms</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">indexDesiredRooms</span><span class="p">)</span>
+        <span class="n">desiredRooms</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">indexDesiredRooms</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="n">numRooms</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">indexDesiredRooms</span><span class="p">)</span>
             <span class="k">while</span><span class="p">(</span><span class="n">i</span> <span class="o">&lt;</span> <span class="n">numRooms</span><span class="p">):</span>
@@ -1172,10 +1210,13 @@ client    </h1>
                 <span class="n">indexDesiredRooms</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">strindex</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
                 <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
 
-            <span class="n">desiredRooms</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
             <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">indexDesiredRooms</span><span class="p">:</span>
+        
                 <span class="n">desiredRooms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">knownRooms</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
-
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+                
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;desired rooms: </span><span class="si">{</span><span class="n">desiredRooms</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="n">joinRoomPayload</span> <span class="o">=</span> <span class="n">roomPayload</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">desiredRooms</span><span class="p">)</span>
         <span class="n">payloadLength</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">desiredRooms</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="n">joinRoomHeader</span> <span class="o">=</span> <span class="n">ircHeader</span><span class="p">(</span>
@@ -1198,8 +1239,8 @@ client    </h1>
         <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">desiredRoom</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">messageDictionary</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">currentRoom</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">desiredRoom</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">showCurrentRoomMessages</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
@@ -1260,30 +1301,39 @@ client    </h1>
         <span class="sd">&quot;&quot;&quot;The method is for when the client desires to quit the chat program. It sends a request to the server to leave&quot;&quot;&quot;</span>
         <span class="n">header</span> <span class="o">=</span> <span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">CLIENT_QUIT_MSG</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
         <span class="n">pkt</span> <span class="o">=</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">clientSocket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">pkt</span><span class="p">))</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">clientSocket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">pkt</span><span class="p">))</span>
+        <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;error occurred: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">listUsers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;This method lists the current users of the room the client is currently in.&quot;&quot;&quot;</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Here are the users in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">currentRoom</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">currentRoomUsers</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">user</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Me!&quot;</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">getUsersInCurrentRoom</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;This method sends a request to the server for a list of users </span>
 <span class="sd">            who are in the room that the requesting client currently is in&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
-        <span class="n">listUsersPayload</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">currentRoom</span>
-        <span class="n">length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">currentRoom</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
-        <span class="n">listUsersHeader</span> <span class="o">=</span> <span class="n">ircHeader</span><span class="p">(</span>
-            <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_MEMBERS_OF_ROOM_REQ</span><span class="p">,</span> <span class="n">length</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;private: &quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">currentRoom</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+            <span class="k">return</span>
+        <span class="n">listUsersPayload</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">currentRoom</span><span class="p">)</span>
+        <span class="n">length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">listUsersPayload</span><span class="p">)</span>
+        <span class="n">listUsersHeader</span> <span class="o">=</span> <span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_MEMBERS_OF_ROOM_REQ</span><span class="p">,</span> <span class="n">length</span><span class="p">)</span>
+        <span class="n">pkt</span> <span class="o">=</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">listUsersHeader</span><span class="p">,</span> <span class="n">listUsersPayload</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">clientSocket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
-                <span class="n">ircPacket</span><span class="p">(</span><span class="n">listUsersHeader</span><span class="p">,</span> <span class="n">listUsersPayload</span><span class="p">)))</span>
+            
+            <span class="bp">self</span><span class="o">.</span><span class="n">clientSocket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">pkt</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
         <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Sorry, it seems as though you have lost connection.&quot;</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error receivced: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;We are ending the program. Please try reconnecting again.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -1296,15 +1346,15 @@ client    </h1>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;------------------------------ to send a message to the current room, just type it and send&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-help&#39;            or &#39;-h&#39;     to see all of these commands again.&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-privatemessage&#39;  or &#39;-pm&#39;    to send a private message to another user.&quot;</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span>
-            <span class="s2">&quot;&#39;-broadcast&#39;       or &#39;-bm&#39;    to send a broadcast message to several rooms.&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-broadcast&#39;       or &#39;-bm&#39;    to send a broadcast message to several rooms.&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-listmessages&#39;    or &#39;-lm&#39;    to see all of the messages in the room you are currently in.&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-joinroom&#39;        or &#39;-j&#39;     to join a public chat room.&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-listusers&#39;       or &#39;-lu&#39;    to see who else is in the room you are in.&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-makeroom&#39;        or &#39;-mkrm&#39;  to make a new chat room. &quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-changeroom&#39;      or &#39;-cr&#39;    to change to a room you are joined. &quot;</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-listpublicrooms&#39; or &#39;-lpr&#39;    to see all available rooms.&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-listpublicrooms&#39; or &#39;-lpr&#39;   to see all available rooms.&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-myrooms&#39;         or &#39;-myrms&#39; to see the rooms you are registered in. &quot;</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-leaveroom&#39;       or &#39;-lm&#39;    to unsubscribe from your current room.&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-leaveroom&#39;       or &#39;-lrm&#39;    to unsubscribe from your current room.&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-quit&#39;            or &#39;-q&#39;     to end the program. &quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">handleInput</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1317,10 +1367,15 @@ client    </h1>
 
             <span class="c1"># Upon every iteration, the state of known rooms, all known users, and all users in the</span>
             <span class="c1"># clients current room are updated.</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">getAllRooms</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">getAllUsers</span><span class="p">()</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">getUsersInCurrentRoom</span><span class="p">()</span>
-            <span class="n">userMessage</span> <span class="o">=</span> <span class="nb">str</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="nb">input</span><span class="p">(</span><span class="s2">&quot;Message: &quot;</span><span class="p">))</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">getAllRooms</span><span class="p">()</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">getAllUsers</span><span class="p">()</span>
+
+            <span class="n">messageBody</span><span class="o">=</span><span class="nb">input</span><span class="p">(</span><span class="s2">&quot;Message: &quot;</span><span class="p">)</span>
+            <span class="n">userMessage</span> <span class="o">=</span> <span class="nb">str</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">messageBody</span><span class="p">)</span>
 
             <span class="k">if</span><span class="p">(</span><span class="n">userMessage</span> <span class="o">==</span> <span class="s2">&quot;-quit&quot;</span> <span class="ow">or</span> <span class="n">userMessage</span> <span class="o">==</span> <span class="s2">&quot;-q&quot;</span><span class="p">):</span>
                 <span class="n">userDone</span> <span class="o">=</span> <span class="kc">True</span>
@@ -1339,6 +1394,9 @@ client    </h1>
             <span class="k">elif</span><span class="p">(</span><span class="n">userMessage</span> <span class="o">==</span> <span class="s2">&quot;-listpublicrooms&quot;</span> <span class="ow">or</span> <span class="n">userMessage</span> <span class="o">==</span> <span class="s2">&quot;-lpr&quot;</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">listPublicRooms</span><span class="p">()</span>
 
+            <span class="k">elif</span><span class="p">(</span><span class="n">userMessage</span> <span class="o">==</span> <span class="s2">&quot;-joinroom&quot;</span> <span class="ow">or</span> <span class="n">userMessage</span> <span class="o">==</span> <span class="s1">&#39;-j&#39;</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">joinRoom</span><span class="p">()</span>
+
             <span class="k">elif</span><span class="p">(</span><span class="n">userMessage</span> <span class="o">==</span> <span class="s2">&quot;-myrooms&quot;</span> <span class="ow">or</span> <span class="n">userMessage</span> <span class="o">==</span> <span class="s2">&quot;-myrms&quot;</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">listMyRooms</span><span class="p">()</span>
 
@@ -1351,7 +1409,7 @@ client    </h1>
                 <span class="bp">self</span><span class="o">.</span><span class="n">sendPrivateMessage</span><span class="p">()</span>
 
             <span class="c1"># leave room</span>
-            <span class="k">elif</span><span class="p">(</span><span class="n">userMessage</span> <span class="o">==</span> <span class="s2">&quot;-leave&quot;</span><span class="p">):</span>
+            <span class="k">elif</span><span class="p">(</span><span class="n">userMessage</span> <span class="o">==</span> <span class="s2">&quot;-leaveroom&quot;</span> <span class="ow">or</span> <span class="n">userMessage</span> <span class="o">==</span> <span class="s2">&quot;-lrm&quot;</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">leaveRoom</span><span class="p">()</span>
 
             <span class="c1"># send broadcast message</span>
@@ -1364,7 +1422,7 @@ client    </h1>
 
             <span class="c1"># send message to room</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">sendMessage</span><span class="p">(</span><span class="n">userMessage</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">sendMessage</span><span class="p">(</span><span class="n">messageBody</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">listMyRooms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;This method displays all of the rooms a user is currently joined to. &quot;&quot;&quot;</span>
@@ -1388,18 +1446,18 @@ client    </h1>
             <span class="n">temp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">currentRoom</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">desiredUser</span> <span class="o">=</span> <span class="n">temp</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
             <span class="n">messageHeader</span> <span class="o">=</span> <span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">SEND_PRIV_MSG_REQ</span><span class="p">,</span> <span class="n">length</span><span class="p">)</span>
-            <span class="n">messagePayload</span> <span class="o">=</span> <span class="n">messagePayload</span><span class="p">(</span>
+            <span class="n">msgPayload</span> <span class="o">=</span> <span class="n">messagePayload</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">desiredUser</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
             <span class="n">messageHeader</span> <span class="o">=</span> <span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">SEND_MSG_REQ</span><span class="p">,</span> <span class="n">length</span><span class="p">)</span>
-            <span class="n">messagePayload</span> <span class="o">=</span> <span class="n">messagePayload</span><span class="p">(</span>
+            <span class="n">msgPayload</span> <span class="o">=</span> <span class="n">messagePayload</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">currentRoom</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">clientSocket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
-                <span class="n">ircPacket</span><span class="p">(</span><span class="n">messageHeader</span><span class="p">,</span> <span class="n">messagePayload</span><span class="p">)))</span>
+                <span class="n">ircPacket</span><span class="p">(</span><span class="n">messageHeader</span><span class="p">,</span> <span class="n">msgPayload</span><span class="p">)))</span>
         <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Sorry, it seems as though you have lost connection.&quot;</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;error received: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -1426,11 +1484,12 @@ client    </h1>
         <span class="c1"># look to see if private chat thread exists</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
         <span class="k">if</span> <span class="sa">f</span><span class="s2">&quot;private: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">desiredUser</span><span class="si">}</span><span class="s2">&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">messageDictionary</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
             <span class="n">privateMessageRecipient</span> <span class="o">=</span> <span class="s2">&quot;private: &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">desiredUser</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">enterPrivateChat</span><span class="p">(</span><span class="n">privateMessageRecipient</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;You are now chatting with </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">desiredUser</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">showCurrentRoomMessages</span><span class="p">()</span>
+        
 
         <span class="c1"># start new chat thread</span>
         <span class="k">else</span><span class="p">:</span>
@@ -1439,6 +1498,7 @@ client    </h1>
                 <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">START_PRIV_CHAT_REQ</span><span class="p">,</span> <span class="n">length</span><span class="p">)</span>
             <span class="n">privateMessagePayload</span> <span class="o">=</span> <span class="n">messagePayload</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">desiredUser</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">clientSocket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
                     <span class="n">ircPacket</span><span class="p">(</span><span class="n">privateMessageHeader</span><span class="p">,</span> <span class="n">privateMessagePayload</span><span class="p">)))</span>
@@ -1446,7 +1506,7 @@ client    </h1>
                 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Sorry, it seems as though you have lost connection.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;We are ending the program. Please try reconnecting again.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="n">quit</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+            <span class="k">return</span> 
 
     <span class="k">def</span> <span class="nf">showCurrentRoomMessages</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;This method displays all of the stored messages in the current room the client is in.&quot;&quot;&quot;</span>
@@ -1531,7 +1591,7 @@ state that are needed for a client to interact with the IRC service.</p>
         <span class="bp">self</span><span class="o">.</span><span class="n">knownUsers</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">currentRoomUsers</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">serverPort</span> <span class="o">=</span> <span class="mi">6667</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">serverIP</span> <span class="o">=</span> <span class="s2">&quot;127.0.0.1&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">serverIP</span> <span class="o">=</span> <span class="s2">&quot;192.168.1.6&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">buffSize</span> <span class="o">=</span> <span class="mi">4096</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">wantToQuit</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
@@ -1691,7 +1751,6 @@ pickle library. Then calls self.receiveMessage to handle how the client interpre
         <span class="sd">&quot;&quot;&quot;This method is only used by the secondary, &quot;listening&quot; thread for the client</span>
 <span class="sd">        It takes a packet as its sole argument. This method then checks the packet&#39;s opcode to determine</span>
 <span class="sd">        how to handle the packet.&quot;&quot;&quot;</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;------received from server: </span><span class="si">{</span><span class="n">serverResponse</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
         <span class="c1"># FORWARD_MESSAGE</span>
         <span class="c1"># A message was received from another client who is also subscribed to a room</span>
@@ -1707,7 +1766,7 @@ pickle library. Then calls self.receiveMessage to handle how the client interpre
         <span class="c1"># for each successful message sent, adding those messages to their corresponding room.</span>
         <span class="k">elif</span><span class="p">(</span><span class="n">serverResponse</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">SEND_BROADCAST_RESP</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
-            <span class="k">for</span> <span class="n">room</span> <span class="ow">in</span> <span class="n">serverResponse</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">receiverName</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">room</span> <span class="ow">in</span> <span class="n">serverResponse</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">receiverName</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">messageDictionary</span><span class="p">[</span><span class="n">room</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                     <span class="s2">&quot;Me: &quot;</span> <span class="o">+</span> <span class="n">serverResponse</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">messageBody</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
@@ -1739,7 +1798,7 @@ pickle library. Then calls self.receiveMessage to handle how the client interpre
         <span class="c1"># replaced with an updated one with every call to this method.</span>
         <span class="k">elif</span><span class="p">(</span><span class="n">serverResponse</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_MEMBERS_OF_ROOM_RESP</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">currentRoomUsers</span> <span class="o">=</span> <span class="n">serverResponse</span><span class="o">.</span><span class="n">payload</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">currentRoomUsers</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">serverResponse</span><span class="o">.</span><span class="n">payload</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
 
         <span class="c1"># MAKE_ROOM_RESP</span>
@@ -1780,12 +1839,13 @@ pickle library. Then calls self.receiveMessage to handle how the client interpre
                 <span class="s2">&quot;Me: &quot;</span> <span class="o">+</span> <span class="n">serverResponse</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">messageBody</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
 
-        <span class="c1"># IRC_OPCODE_JOIN_ROOM_RESP</span>
+        <span class="c1"># JOIN_ROOM_RESP</span>
         <span class="c1"># Client was able to successfully join their desired room.</span>
         <span class="c1"># a new entry in the message dictionary is made for that room and</span>
         <span class="c1"># the user is told of the success</span>
-        <span class="k">elif</span><span class="p">(</span><span class="n">serverResponse</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">IRC_OPCODE_JOIN_ROOM_RESP</span><span class="p">):</span>
+        <span class="k">elif</span><span class="p">(</span><span class="n">serverResponse</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">opCode</span> <span class="o">==</span> <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">JOIN_ROOM_RESP</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Server sent back </span><span class="si">{</span><span class="n">serverResponse</span><span class="o">.</span><span class="n">payload</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">room</span> <span class="ow">in</span> <span class="n">serverResponse</span><span class="o">.</span><span class="n">payload</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">room</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">messageDictionary</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">messageDictionary</span><span class="p">[</span><span class="n">room</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -1888,9 +1948,12 @@ how to handle the packet.</p>
         <span class="sd">&quot;&quot;&quot;This method sends a request to the server asking it for a list of all public rooms that the server is</span>
 <span class="sd">        keeping track of.&quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">clientSocket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
                 <span class="n">ircPacket</span><span class="p">(</span><span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_ROOMS_REQ</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="s2">&quot;&quot;</span><span class="p">)))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
         <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Sorry, it seems as though you have lost connection.&quot;</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error receivced: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;We are ending the program. Please try reconnecting again.&quot;</span><span class="p">)</span>
@@ -1918,9 +1981,12 @@ keeping track of.</p>
             <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">getAllUsers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;This method sends a request to the server asking it for a list of all connected clients.&quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">clientSocket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
                 <span class="n">ircPacket</span><span class="p">(</span><span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_USERS_REQ</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="s2">&quot;&quot;</span><span class="p">)))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
         <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
             <span class="nb">print</span><span class="p">(</span>
                 <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Sorry, it seems as though you have lost connection. In getAllUsers()&quot;</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error receivced: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -1977,9 +2043,11 @@ keeping track of.</p>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">listPublicRooms</span><span class="p">()</span>
         <span class="n">strDesiredRooms</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;Which room numbers do you wish to join?: &quot;</span><span class="p">)</span>
-        <span class="n">indexDesiredRooms</span> <span class="o">=</span> <span class="n">strDesiredRooms</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">indexDesiredRooms</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">indexDesiredRooms</span> <span class="o">=</span> <span class="n">strDesiredRooms</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">indexDesiredRooms</span><span class="p">)</span>
+        <span class="n">desiredRooms</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">indexDesiredRooms</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="n">numRooms</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">indexDesiredRooms</span><span class="p">)</span>
             <span class="k">while</span><span class="p">(</span><span class="n">i</span> <span class="o">&lt;</span> <span class="n">numRooms</span><span class="p">):</span>
@@ -1987,10 +2055,13 @@ keeping track of.</p>
                 <span class="n">indexDesiredRooms</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">strindex</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
                 <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
 
-            <span class="n">desiredRooms</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
             <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">indexDesiredRooms</span><span class="p">:</span>
+        
                 <span class="n">desiredRooms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">knownRooms</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
-
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+                
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;desired rooms: </span><span class="si">{</span><span class="n">desiredRooms</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="n">joinRoomPayload</span> <span class="o">=</span> <span class="n">roomPayload</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">desiredRooms</span><span class="p">)</span>
         <span class="n">payloadLength</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">desiredRooms</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="n">joinRoomHeader</span> <span class="o">=</span> <span class="n">ircHeader</span><span class="p">(</span>
@@ -2033,8 +2104,8 @@ Then a request is sent to the server asking it to add the user to those rooms.</
         <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">desiredRoom</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">messageDictionary</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">currentRoom</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">desiredRoom</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">showCurrentRoomMessages</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
@@ -2150,7 +2221,10 @@ It will then print the messages for that room.</p>
         <span class="sd">&quot;&quot;&quot;The method is for when the client desires to quit the chat program. It sends a request to the server to leave&quot;&quot;&quot;</span>
         <span class="n">header</span> <span class="o">=</span> <span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">CLIENT_QUIT_MSG</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
         <span class="n">pkt</span> <span class="o">=</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">clientSocket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">pkt</span><span class="p">))</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">clientSocket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">pkt</span><span class="p">))</span>
+        <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;error occurred: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 
         </details>
@@ -2173,11 +2247,13 @@ It will then print the messages for that room.</p>
             <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">listUsers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;This method lists the current users of the room the client is currently in.&quot;&quot;&quot;</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Here are the users in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">currentRoom</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">currentRoomUsers</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">user</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Me!&quot;</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
 </pre></div>
 
         </details>
@@ -2201,15 +2277,19 @@ It will then print the messages for that room.</p>
         <span class="sd">&quot;&quot;&quot;This method sends a request to the server for a list of users </span>
 <span class="sd">            who are in the room that the requesting client currently is in&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
-        <span class="n">listUsersPayload</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">currentRoom</span>
-        <span class="n">length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">currentRoom</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
-        <span class="n">listUsersHeader</span> <span class="o">=</span> <span class="n">ircHeader</span><span class="p">(</span>
-            <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_MEMBERS_OF_ROOM_REQ</span><span class="p">,</span> <span class="n">length</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;private: &quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">currentRoom</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+            <span class="k">return</span>
+        <span class="n">listUsersPayload</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">currentRoom</span><span class="p">)</span>
+        <span class="n">length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">listUsersPayload</span><span class="p">)</span>
+        <span class="n">listUsersHeader</span> <span class="o">=</span> <span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">LIST_MEMBERS_OF_ROOM_REQ</span><span class="p">,</span> <span class="n">length</span><span class="p">)</span>
+        <span class="n">pkt</span> <span class="o">=</span> <span class="n">ircPacket</span><span class="p">(</span><span class="n">listUsersHeader</span><span class="p">,</span> <span class="n">listUsersPayload</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">clientSocket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
-                <span class="n">ircPacket</span><span class="p">(</span><span class="n">listUsersHeader</span><span class="p">,</span> <span class="n">listUsersPayload</span><span class="p">)))</span>
+            
+            <span class="bp">self</span><span class="o">.</span><span class="n">clientSocket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">pkt</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
         <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Sorry, it seems as though you have lost connection.&quot;</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error receivced: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;We are ending the program. Please try reconnecting again.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -2241,15 +2321,15 @@ who are in the room that the requesting client currently is in</p>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;------------------------------ to send a message to the current room, just type it and send&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-help&#39;            or &#39;-h&#39;     to see all of these commands again.&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-privatemessage&#39;  or &#39;-pm&#39;    to send a private message to another user.&quot;</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span>
-            <span class="s2">&quot;&#39;-broadcast&#39;       or &#39;-bm&#39;    to send a broadcast message to several rooms.&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-broadcast&#39;       or &#39;-bm&#39;    to send a broadcast message to several rooms.&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-listmessages&#39;    or &#39;-lm&#39;    to see all of the messages in the room you are currently in.&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-joinroom&#39;        or &#39;-j&#39;     to join a public chat room.&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-listusers&#39;       or &#39;-lu&#39;    to see who else is in the room you are in.&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-makeroom&#39;        or &#39;-mkrm&#39;  to make a new chat room. &quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-changeroom&#39;      or &#39;-cr&#39;    to change to a room you are joined. &quot;</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-listpublicrooms&#39; or &#39;-lpr&#39;    to see all available rooms.&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-listpublicrooms&#39; or &#39;-lpr&#39;   to see all available rooms.&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-myrooms&#39;         or &#39;-myrms&#39; to see the rooms you are registered in. &quot;</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-leaveroom&#39;       or &#39;-lm&#39;    to unsubscribe from your current room.&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-leaveroom&#39;       or &#39;-lrm&#39;    to unsubscribe from your current room.&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&#39;-quit&#39;            or &#39;-q&#39;     to end the program. &quot;</span><span class="p">)</span>
 </pre></div>
 
@@ -2280,10 +2360,15 @@ who are in the room that the requesting client currently is in</p>
 
             <span class="c1"># Upon every iteration, the state of known rooms, all known users, and all users in the</span>
             <span class="c1"># clients current room are updated.</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">getAllRooms</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">getAllUsers</span><span class="p">()</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">getUsersInCurrentRoom</span><span class="p">()</span>
-            <span class="n">userMessage</span> <span class="o">=</span> <span class="nb">str</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="nb">input</span><span class="p">(</span><span class="s2">&quot;Message: &quot;</span><span class="p">))</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">getAllRooms</span><span class="p">()</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">getAllUsers</span><span class="p">()</span>
+
+            <span class="n">messageBody</span><span class="o">=</span><span class="nb">input</span><span class="p">(</span><span class="s2">&quot;Message: &quot;</span><span class="p">)</span>
+            <span class="n">userMessage</span> <span class="o">=</span> <span class="nb">str</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">messageBody</span><span class="p">)</span>
 
             <span class="k">if</span><span class="p">(</span><span class="n">userMessage</span> <span class="o">==</span> <span class="s2">&quot;-quit&quot;</span> <span class="ow">or</span> <span class="n">userMessage</span> <span class="o">==</span> <span class="s2">&quot;-q&quot;</span><span class="p">):</span>
                 <span class="n">userDone</span> <span class="o">=</span> <span class="kc">True</span>
@@ -2302,6 +2387,9 @@ who are in the room that the requesting client currently is in</p>
             <span class="k">elif</span><span class="p">(</span><span class="n">userMessage</span> <span class="o">==</span> <span class="s2">&quot;-listpublicrooms&quot;</span> <span class="ow">or</span> <span class="n">userMessage</span> <span class="o">==</span> <span class="s2">&quot;-lpr&quot;</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">listPublicRooms</span><span class="p">()</span>
 
+            <span class="k">elif</span><span class="p">(</span><span class="n">userMessage</span> <span class="o">==</span> <span class="s2">&quot;-joinroom&quot;</span> <span class="ow">or</span> <span class="n">userMessage</span> <span class="o">==</span> <span class="s1">&#39;-j&#39;</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">joinRoom</span><span class="p">()</span>
+
             <span class="k">elif</span><span class="p">(</span><span class="n">userMessage</span> <span class="o">==</span> <span class="s2">&quot;-myrooms&quot;</span> <span class="ow">or</span> <span class="n">userMessage</span> <span class="o">==</span> <span class="s2">&quot;-myrms&quot;</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">listMyRooms</span><span class="p">()</span>
 
@@ -2314,7 +2402,7 @@ who are in the room that the requesting client currently is in</p>
                 <span class="bp">self</span><span class="o">.</span><span class="n">sendPrivateMessage</span><span class="p">()</span>
 
             <span class="c1"># leave room</span>
-            <span class="k">elif</span><span class="p">(</span><span class="n">userMessage</span> <span class="o">==</span> <span class="s2">&quot;-leave&quot;</span><span class="p">):</span>
+            <span class="k">elif</span><span class="p">(</span><span class="n">userMessage</span> <span class="o">==</span> <span class="s2">&quot;-leaveroom&quot;</span> <span class="ow">or</span> <span class="n">userMessage</span> <span class="o">==</span> <span class="s2">&quot;-lrm&quot;</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">leaveRoom</span><span class="p">()</span>
 
             <span class="c1"># send broadcast message</span>
@@ -2327,7 +2415,7 @@ who are in the room that the requesting client currently is in</p>
 
             <span class="c1"># send message to room</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">sendMessage</span><span class="p">(</span><span class="n">userMessage</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">sendMessage</span><span class="p">(</span><span class="n">messageBody</span><span class="p">)</span>
 </pre></div>
 
         </details>
@@ -2387,18 +2475,18 @@ who are in the room that the requesting client currently is in</p>
             <span class="n">temp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">currentRoom</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">desiredUser</span> <span class="o">=</span> <span class="n">temp</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
             <span class="n">messageHeader</span> <span class="o">=</span> <span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">SEND_PRIV_MSG_REQ</span><span class="p">,</span> <span class="n">length</span><span class="p">)</span>
-            <span class="n">messagePayload</span> <span class="o">=</span> <span class="n">messagePayload</span><span class="p">(</span>
+            <span class="n">msgPayload</span> <span class="o">=</span> <span class="n">messagePayload</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">desiredUser</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
             <span class="n">messageHeader</span> <span class="o">=</span> <span class="n">ircHeader</span><span class="p">(</span><span class="n">ircOpcodes</span><span class="o">.</span><span class="n">SEND_MSG_REQ</span><span class="p">,</span> <span class="n">length</span><span class="p">)</span>
-            <span class="n">messagePayload</span> <span class="o">=</span> <span class="n">messagePayload</span><span class="p">(</span>
+            <span class="n">msgPayload</span> <span class="o">=</span> <span class="n">messagePayload</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">currentRoom</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">clientSocket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
-                <span class="n">ircPacket</span><span class="p">(</span><span class="n">messageHeader</span><span class="p">,</span> <span class="n">messagePayload</span><span class="p">)))</span>
+                <span class="n">ircPacket</span><span class="p">(</span><span class="n">messageHeader</span><span class="p">,</span> <span class="n">msgPayload</span><span class="p">)))</span>
         <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Sorry, it seems as though you have lost connection.&quot;</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;error received: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -2462,11 +2550,12 @@ case of private messaging.</p>
         <span class="c1"># look to see if private chat thread exists</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
         <span class="k">if</span> <span class="sa">f</span><span class="s2">&quot;private: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">desiredUser</span><span class="si">}</span><span class="s2">&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">messageDictionary</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
             <span class="n">privateMessageRecipient</span> <span class="o">=</span> <span class="s2">&quot;private: &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">desiredUser</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">enterPrivateChat</span><span class="p">(</span><span class="n">privateMessageRecipient</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;You are now chatting with </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">desiredUser</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">showCurrentRoomMessages</span><span class="p">()</span>
+        
 
         <span class="c1"># start new chat thread</span>
         <span class="k">else</span><span class="p">:</span>
@@ -2475,6 +2564,7 @@ case of private messaging.</p>
                 <span class="n">ircOpcodes</span><span class="o">.</span><span class="n">START_PRIV_CHAT_REQ</span><span class="p">,</span> <span class="n">length</span><span class="p">)</span>
             <span class="n">privateMessagePayload</span> <span class="o">=</span> <span class="n">messagePayload</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">desiredUser</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">clientSocket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
                     <span class="n">ircPacket</span><span class="p">(</span><span class="n">privateMessageHeader</span><span class="p">,</span> <span class="n">privateMessagePayload</span><span class="p">)))</span>
@@ -2482,7 +2572,7 @@ case of private messaging.</p>
                 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Sorry, it seems as though you have lost connection.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;We are ending the program. Please try reconnecting again.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="n">quit</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+            <span class="k">return</span> 
 </pre></div>
 
         </details>
