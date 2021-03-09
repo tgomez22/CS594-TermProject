@@ -36,7 +36,7 @@ class client:
         self.knownUsers = []
         self.currentRoomUsers = []
         self.serverPort = 6667
-        self.serverIP = "127.0.0.1"
+        self.serverIP = "192.168.1.6"
         self.buffSize = 4096
         self.wantToQuit = False
         self.mutex = threading.Lock()
@@ -480,6 +480,9 @@ class client:
         """This method sends a request to the server for a list of users 
             who are in the room that the requesting client currently is in"""
         self.mutex.acquire()
+        if "private: " in self.currentRoom:
+            self.mutex.release()
+            return
         listUsersPayload = str(self.currentRoom)
         length = len(listUsersPayload)
         listUsersHeader = ircHeader(ircOpcodes.LIST_MEMBERS_OF_ROOM_REQ, length)

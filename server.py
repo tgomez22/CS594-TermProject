@@ -330,7 +330,7 @@ class server:
         rooms = self.roomDictionary.keys()
         self.mutex.release()
         if desiredRoom not in list(rooms):
-            return ircPacket(ircHeader(ircOpcodes.ROOM_DOES_NOT_EXIST), "")
+            return ircPacket(ircHeader(ircOpcodes.ROOM_DOES_NOT_EXIST, 0), "")
         else:
             self.mutex.acquire()
             responsePayload = list(self.roomDictionary[desiredRoom])
