@@ -581,7 +581,7 @@ class client:
 
             # send message to room
             else:
-                self.sendMessage(userMessage)
+                self.sendMessage(messageBody)
 
     def listMyRooms(self):
         """This method displays all of the rooms a user is currently joined to. """
