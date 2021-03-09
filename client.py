@@ -12,7 +12,7 @@ import pickle
 # import capability to have multiple threads, allows us to handle sending and receiving at the same time.
 from _thread import *
 import threading
-
+import time
 
 class client:
     """
@@ -140,7 +140,6 @@ class client:
         """This method is only used by the secondary, "listening" thread for the client
         It takes a packet as its sole argument. This method then checks the packet's opcode to determine
         how to handle the packet."""
-        print(f"------received from server: {serverResponse.header.opCode}")
 
         # FORWARD_MESSAGE
         # A message was received from another client who is also subscribed to a room
@@ -156,7 +155,7 @@ class client:
         # for each successful message sent, adding those messages to their corresponding room.
         elif(serverResponse.header.opCode == ircOpcodes.SEND_BROADCAST_RESP):
             self.mutex.acquire()
-            for room in serverResponse.payload.message.receiverName:
+            for room in serverResponse.payload.receiverName:
                 self.messageDictionary[room].append(
                     "Me: " + serverResponse.payload.message.messageBody)
             self.mutex.release()
@@ -188,7 +187,7 @@ class client:
         # replaced with an updated one with every call to this method.
         elif(serverResponse.header.opCode == ircOpcodes.LIST_MEMBERS_OF_ROOM_RESP):
             self.mutex.acquire()
-            self.currentRoomUsers = serverResponse.payload
+            self.currentRoomUsers = list(serverResponse.payload)
             self.mutex.release()
 
         # MAKE_ROOM_RESP
@@ -229,12 +228,13 @@ class client:
                 "Me: " + serverResponse.payload.message.messageBody)
             self.mutex.release()
 
-        # IRC_OPCODE_JOIN_ROOM_RESP
+        # JOIN_ROOM_RESP
         # Client was able to successfully join their desired room.
         # a new entry in the message dictionary is made for that room and
         # the user is told of the success
-        elif(serverResponse.header.opCode == ircOpcodes.IRC_OPCODE_JOIN_ROOM_RESP):
+        elif(serverResponse.header.opCode == ircOpcodes.JOIN_ROOM_RESP):
             self.mutex.acquire()
+            print(f"Server sent back {serverResponse.payload}")
             for room in serverResponse.payload:
                 if room not in self.messageDictionary.keys():
                     self.messageDictionary[room] = []
@@ -317,9 +317,12 @@ class client:
         """This method sends a request to the server asking it for a list of all public rooms that the server is
         keeping track of."""
         try:
+            self.mutex.acquire()
             self.clientSocket.send(pickle.dumps(
                 ircPacket(ircHeader(ircOpcodes.LIST_ROOMS_REQ, 0), "")))
+            self.mutex.release()
         except socket.error as e:
+            self.mutex.release()
             print("\nSorry, it seems as though you have lost connection.")
             print(f"Error receivced: {e}")
             print("We are ending the program. Please try reconnecting again.")
@@ -328,9 +331,12 @@ class client:
     def getAllUsers(self):
         """This method sends a request to the server asking it for a list of all connected clients."""
         try:
+            self.mutex.acquire()
             self.clientSocket.send(pickle.dumps(
                 ircPacket(ircHeader(ircOpcodes.LIST_USERS_REQ, 0), "")))
+            self.mutex.release()
         except socket.error as e:
+            self.mutex.release()
             print(
                 "\nSorry, it seems as though you have lost connection. In getAllUsers()")
             print(f"Error receivced: {e}")
@@ -351,9 +357,11 @@ class client:
 
         self.listPublicRooms()
         strDesiredRooms = input("Which room numbers do you wish to join?: ")
-        indexDesiredRooms = strDesiredRooms.split(" ")
-
-        if len(indexDesiredRooms) > 1:
+        indexDesiredRooms = strDesiredRooms.split()
+        print()
+        print(indexDesiredRooms)
+        desiredRooms = []
+        if len(indexDesiredRooms) > 0:
             i = 0
             numRooms = len(indexDesiredRooms)
             while(i < numRooms):
@@ -361,10 +369,13 @@ class client:
                 indexDesiredRooms[i] = int(strindex) - 1
                 i += 1
 
-            desiredRooms = []
+            self.mutex.acquire()
             for j in indexDesiredRooms:
+        
                 desiredRooms.append(self.knownRooms[j])
-
+            self.mutex.release()
+                
+        print(f"desired rooms: {desiredRooms}")
         joinRoomPayload = roomPayload(self.name, desiredRooms)
         payloadLength = len(desiredRooms) + len(self.name)
         joinRoomHeader = ircHeader(
@@ -387,8 +398,8 @@ class client:
         self.mutex.acquire()
 
         if self.desiredRoom in self.messageDictionary.keys():
-            self.mutex.release()
             self.currentRoom = self.desiredRoom
+            self.mutex.release()
             self.showCurrentRoomMessages()
         else:
             self.mutex.release()
@@ -449,30 +460,36 @@ class client:
         """The method is for when the client desires to quit the chat program. It sends a request to the server to leave"""
         header = ircHeader(ircOpcodes.CLIENT_QUIT_MSG, 0)
         pkt = ircPacket(header, "")
-        self.clientSocket.send(pickle.dumps(pkt))
+        try:
+            self.clientSocket.send(pickle.dumps(pkt))
+        except socket.error as e:
+            print(f"error occurred: {e}")
 
     def listUsers(self):
         """This method lists the current users of the room the client is currently in."""
         print(f"Here are the users in {self.currentRoom}")
+        self.mutex.acquire()
         for user in self.currentRoomUsers:
             if user == self.name:
                 print("Me!")
             else:
                 print(user)
+        self.mutex.release()
 
     def getUsersInCurrentRoom(self):
         """This method sends a request to the server for a list of users 
             who are in the room that the requesting client currently is in"""
         self.mutex.acquire()
-        listUsersPayload = self.currentRoom
-        length = len(self.currentRoom)
-        self.mutex.release()
-        listUsersHeader = ircHeader(
-            ircOpcodes.LIST_MEMBERS_OF_ROOM_REQ, length)
+        listUsersPayload = str(self.currentRoom)
+        length = len(listUsersPayload)
+        listUsersHeader = ircHeader(ircOpcodes.LIST_MEMBERS_OF_ROOM_REQ, length)
+        pkt = ircPacket(listUsersHeader, listUsersPayload)
         try:
-            self.clientSocket.send(pickle.dumps(
-                ircPacket(listUsersHeader, listUsersPayload)))
+            
+            self.clientSocket.send(pickle.dumps(pkt))
+            self.mutex.release()
         except socket.error as e:
+            self.mutex.release()
             print("\nSorry, it seems as though you have lost connection.")
             print(f"Error receivced: {e}")
             print("We are ending the program. Please try reconnecting again.\n")
@@ -485,15 +502,15 @@ class client:
         print("------------------------------ to send a message to the current room, just type it and send")
         print("'-help'            or '-h'     to see all of these commands again.")
         print("'-privatemessage'  or '-pm'    to send a private message to another user.")
-        print(
-            "'-broadcast'       or '-bm'    to send a broadcast message to several rooms.")
+        print("'-broadcast'       or '-bm'    to send a broadcast message to several rooms.")
         print("'-listmessages'    or '-lm'    to see all of the messages in the room you are currently in.")
+        print("'-joinroom'        or '-j'     to join a public chat room.")
         print("'-listusers'       or '-lu'    to see who else is in the room you are in.")
         print("'-makeroom'        or '-mkrm'  to make a new chat room. ")
         print("'-changeroom'      or '-cr'    to change to a room you are joined. ")
-        print("'-listpublicrooms' or '-lpr'    to see all available rooms.")
+        print("'-listpublicrooms' or '-lpr'   to see all available rooms.")
         print("'-myrooms'         or '-myrms' to see the rooms you are registered in. ")
-        print("'-leaveroom'       or '-lm'    to unsubscribe from your current room.")
+        print("'-leaveroom'       or '-lrm'    to unsubscribe from your current room.")
         print("'-quit'            or '-q'     to end the program. ")
 
     def handleInput(self):
@@ -506,9 +523,11 @@ class client:
 
             # Upon every iteration, the state of known rooms, all known users, and all users in the
             # clients current room are updated.
-            self.getAllRooms()
-            self.getAllUsers()
             self.getUsersInCurrentRoom()
+            time.sleep(1)
+            self.getAllRooms()
+            time.sleep(1)
+            self.getAllUsers()
             userMessage = str.lower(input("Message: "))
 
             if(userMessage == "-quit" or userMessage == "-q"):
@@ -528,6 +547,9 @@ class client:
             elif(userMessage == "-listpublicrooms" or userMessage == "-lpr"):
                 self.listPublicRooms()
 
+            elif(userMessage == "-joinroom" or userMessage == '-j'):
+                self.joinRoom()
+
             elif(userMessage == "-myrooms" or userMessage == "-myrms"):
                 self.listMyRooms()
 
@@ -540,7 +562,7 @@ class client:
                 self.sendPrivateMessage()
 
             # leave room
-            elif(userMessage == "-leave"):
+            elif(userMessage == "-leaveroom"):
                 self.leaveRoom()
 
             # send broadcast message
@@ -577,18 +599,18 @@ class client:
             temp = self.currentRoom.split()
             self.desiredUser = temp[1]
             messageHeader = ircHeader(ircOpcodes.SEND_PRIV_MSG_REQ, length)
-            messagePayload = messagePayload(
+            msgPayload = messagePayload(
                 self.name, self.desiredUser, message)
             self.mutex.release()
         else:
             self.mutex.acquire()
             messageHeader = ircHeader(ircOpcodes.SEND_MSG_REQ, length)
-            messagePayload = messagePayload(
+            msgPayload = messagePayload(
                 self.name, self.currentRoom, message)
             self.mutex.release()
         try:
             self.clientSocket.send(pickle.dumps(
-                ircPacket(messageHeader, messagePayload)))
+                ircPacket(messageHeader, msgPayload)))
         except socket.error as e:
             print("\nSorry, it seems as though you have lost connection.")
             print(f"error received: {e}")
@@ -615,11 +637,12 @@ class client:
         # look to see if private chat thread exists
         self.mutex.acquire()
         if f"private: {self.desiredUser}" in self.messageDictionary.keys():
+            self.mutex.release()
             privateMessageRecipient = "private: " + self.desiredUser
             self.enterPrivateChat(privateMessageRecipient)
             print(f"You are now chatting with {self.desiredUser}")
-            self.mutex.release()
             self.showCurrentRoomMessages()
+        
 
         # start new chat thread
         else:
@@ -628,6 +651,7 @@ class client:
                 ircOpcodes.START_PRIV_CHAT_REQ, length)
             privateMessagePayload = messagePayload(
                 self.name, self.desiredUser, "")
+            self.mutex.release()
             try:
                 self.clientSocket.send(pickle.dumps(
                     ircPacket(privateMessageHeader, privateMessagePayload)))
@@ -635,7 +659,7 @@ class client:
                 print("Sorry, it seems as though you have lost connection.\n")
                 print("We are ending the program. Please try reconnecting again.\n")
                 quit()
-        self.mutex.release()
+            return 
 
     def showCurrentRoomMessages(self):
         """This method displays all of the stored messages in the current room the client is in."""

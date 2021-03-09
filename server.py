@@ -20,7 +20,7 @@ class server:
         self.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # socket.create_server((host, port))
         self.threadCount = 0
-        self.buffSize = 4096
+        self.buffSize = 4096 * 2
         self.mutex = threading.Lock()
         self.runServer = True
 
@@ -41,7 +41,7 @@ class server:
                 break
 
             clientRequestPacket = pickle.loads(data)
-
+            print(f"Hot off the byte stream: {clientRequestPacket.header.opCode}")
             responsePacket = self.handlePacket(clientRequestPacket, connection)
             if(responsePacket == None):
                 clientAlive = False
@@ -85,10 +85,12 @@ class server:
             print(f"There are {self.threadCount} active threads.")
         elif(cmd == "-quit" or cmd == "-q"):
             self.runServer = False
+        elif(cmd == "-help" or cmd == "-h"):
+            self.listCommands()
         else:
             print("Not a valid command. Please try again.")
 
-    def listCommands():
+    def listCommands(self):
         print("Here are the commands you can run to see the state of different objects on the server:")
         print("-rooms           shows all rooms")
         print("-clients         shows all the active clients connected to the server")
@@ -134,14 +136,14 @@ class server:
         handles removing the client from the active users list and removes the connection information."""
         self.mutex.acquire()
 
+        print(f'client list before attempting to remove client\n{self.clientDictionary}')
         clientInDictionary = None
         for client, value in self.clientDictionary.items():
             if value == connection:
                 clientInDictionary = client
 
+        print(f"Client list before removing {clientInDictionary} from connected clients:\n{list(self.clientDictionary.keys())}")
         if clientInDictionary != None:
-            print(
-                f"Client list before removing {clientInDictionary} from connected clients:\n{list(self.clientDictionary.keys())}")
             del self.clientDictionary[clientInDictionary]
             print(f"After {clientInDictionary} was removed: ")
             print(self.clientDictionary)
@@ -158,7 +160,7 @@ class server:
                         self.roomDictionary[room].remove(clientInDictionary)
                         print(f"{clientInDictionary} removed from room: {room}")
 
-                self.mutex.release()
+        self.mutex.release()
 
     def isNameLegal(self, name: str):
         """This function checks to see if a given user name or room name contains only legal characters.
@@ -331,16 +333,19 @@ class server:
     def getMembersOfSpecificRoom(self, desiredRoom):
         """Handles request from a client to list all the clients in a room."""
         self.mutex.acquire()
-        if desiredRoom not in list(self.roomDictionary.keys()):
-            self.mutex.release()
+        rooms = self.roomDictionary.keys()
+        self.mutex.release()
+        if desiredRoom not in list(rooms):
             return ircPacket(ircHeader(ircOpcodes.ROOM_DOES_NOT_EXIST), "")
         else:
+            self.mutex.acquire()
             responsePayload = list(self.roomDictionary[desiredRoom])
+            self.mutex.release()
+            print(f"response payload: {responsePayload}")
             responseLength = 0
             for user in responsePayload:
                 responseLength += len(user)
-            self.mutex.release()
-            return ircPacket(ircHeader(ircOpcodes.IRC_OPCODE_LIST_MEMBERS_OF_ROOM_RESP, responseLength), responsePayload)
+            return ircPacket(ircHeader(ircOpcodes.LIST_MEMBERS_OF_ROOM_RESP, responseLength), responsePayload)
 
     def removeSpecificUserFromRoom(self, packet):
         """Handles client request to leave a room."""
@@ -354,14 +359,16 @@ class server:
         """This function is where a request packet from a client first gets filtered.
         Calls appropriate handle function based on opcode in the packet header."""
         # print(f"\npacket type: {type(packet)}\n")
-
+        print(packet.header.opCode)
         # register new client
         if(packet.header.opCode == ircOpcodes.REGISTER_CLIENT_REQ):
             return ircPacket(ircHeader(self.registerClient(packet.payload, connection), 0), "")
 
         # list rooms request
         elif (packet.header.opCode == ircOpcodes.LIST_ROOMS_REQ):
+            self.mutex.acquire()
             rooms = list(self.roomDictionary.keys())
+            self.mutex.release()
             temp = ircPacket(
                 ircHeader(ircOpcodes.LIST_ROOMS_RESP, len(rooms)), rooms)
             print(f"The get all rooms response is: {type(temp)}")
@@ -370,17 +377,20 @@ class server:
 
         # list users request
         elif(packet.header.opCode == ircOpcodes.LIST_USERS_REQ):
+            self.mutex.acquire()
+            clients = list(self.clientDictionary.keys())
+            self.mutex.release()
             length = 0
-            for user in self.clientDictionary.keys():
+            for user in clients:
                 length += len(user)
-            return ircPacket(ircHeader(ircOpcodes.LIST_USERS_RESP, length), list(self.clientDictionary.keys()))
+            return ircPacket(ircHeader(ircOpcodes.LIST_USERS_RESP, length),clients)
 
         # make new room request
         elif(packet.header.opCode == ircOpcodes.MAKE_ROOM_REQ):
-            return ircPacket(ircHeader(self.makeNewRoom(packet), len(packet.payload)), packet.payload)
+            return ircPacket(ircHeader(self.makeNewRoom(packet), len(packet.payload.senderName + packet.payload.roomName)), packet.payload)
 
         # join room request
-        elif packet.header.opCode == ircOpcodes.JOIN_ROOM_REQ:
+        elif (packet.header.opCode == ircOpcodes.JOIN_ROOM_REQ):
             roomsToJoin = []
             length = 0
             sender = packet.payload.senderName
@@ -392,7 +402,8 @@ class server:
             return ircPacket(ircHeader(ircOpcodes.JOIN_ROOM_RESP, length), roomsToJoin)
 
         # list members of specific room
-        elif packet.header.opCode == ircOpcodes.LIST_MEMBERS_OF_ROOM_REQ:
+        elif (packet.header.opCode == ircOpcodes.LIST_MEMBERS_OF_ROOM_REQ):
+            print(f"server got request for members of room {packet.payload}")
             return self.getMembersOfSpecificRoom(packet.payload)
 
         # remove user from specific room
@@ -422,7 +433,6 @@ class server:
 
         # quit
         elif(packet.header.opCode == ircOpcodes.CLIENT_QUIT_MSG):
-            self.mutex.acquire()
             print("\nReceived request to disconnect a client.")
             self.removeClientFromServer(connection)
             return None
@@ -441,7 +451,7 @@ class server:
             respCode = ircOpcodes.SEND_BROADCAST_RESP
             header = ircHeader(respCode, len(roomsToForward))
             pktPayload = messagePayload(
-                packet.payload.senderName, roomsToForward, packet.payload.message)
+                packet.payload.message.senderName, roomsToForward, packet.payload.message.messageBody)
             return ircPacket(header, pktPayload)
 
         # how did you get here?
