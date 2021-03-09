@@ -532,7 +532,9 @@ class client:
             self.getAllRooms()
             time.sleep(1)
             self.getAllUsers()
-            userMessage = str.lower(input("Message: "))
+
+            messageBody=input("Message: ")
+            userMessage = str.lower(messageBody)
 
             if(userMessage == "-quit" or userMessage == "-q"):
                 userDone = True
