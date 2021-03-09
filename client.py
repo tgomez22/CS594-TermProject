@@ -566,7 +566,7 @@ class client:
                 self.sendPrivateMessage()
 
             # leave room
-            elif(userMessage == "-leaveroom"):
+            elif(userMessage == "-leaveroom" or userMessage == "-lrm"):
                 self.leaveRoom()
 
             # send broadcast message
