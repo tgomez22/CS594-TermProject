@@ -15,12 +15,12 @@ class server:
         # key = roomName, value = list of clients joined in room
         self.roomDictionary = {"Lobby": []}
         self.name = "Tristan and Lydia's IRC Server"
-        self.host = '127.0.0.1'
+        self.host = '192.168.1.6'
         self.port = 6667
         self.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # socket.create_server((host, port))
         self.threadCount = 0
-        self.buffSize = 4096 * 2
+        self.buffSize = 4096
         self.mutex = threading.Lock()
         self.runServer = True
 
@@ -38,6 +38,7 @@ class server:
                 self.threadCount -= 1
                 return
             if not data:
+                print("\n\nunique message before guess\n\n")
                 break
 
             clientRequestPacket = pickle.loads(data)
@@ -135,18 +136,14 @@ class server:
         """Whenever a client leaves their program, either by request or because of an error, this function
         handles removing the client from the active users list and removes the connection information."""
         self.mutex.acquire()
-
-        print(f'client list before attempting to remove client\n{self.clientDictionary}')
+        
         clientInDictionary = None
         for client, value in self.clientDictionary.items():
             if value == connection:
                 clientInDictionary = client
 
-        print(f"Client list before removing {clientInDictionary} from connected clients:\n{list(self.clientDictionary.keys())}")
         if clientInDictionary != None:
             del self.clientDictionary[clientInDictionary]
-            print(f"After {clientInDictionary} was removed: ")
-            print(self.clientDictionary)
 
             roomsClientIsIn = []
             for room, members in self.roomDictionary.items():
@@ -154,11 +151,8 @@ class server:
                     if member == clientInDictionary:
                         roomsClientIsIn.append(room)
 
-                    print(
-                        f"Attempting to remove the Client {clientInDictionary} from these rooms: \n{roomsClientIsIn}")
-                    for room in roomsClientIsIn:
-                        self.roomDictionary[room].remove(clientInDictionary)
-                        print(f"{clientInDictionary} removed from room: {room}")
+            for room in roomsClientIsIn:
+                self.roomDictionary[room].remove(clientInDictionary)
 
         self.mutex.release()
 
@@ -350,6 +344,7 @@ class server:
     def removeSpecificUserFromRoom(self, packet):
         """Handles client request to leave a room."""
         self.mutex.acquire()
+        print(f"remove {packet.payload.senderName} from {packet.payload.roomName}")
         if packet.payload.senderName in self.roomDictionary[packet.payload.roomName]:
             self.roomDictionary[packet.payload.roomName].remove(
                 packet.payload.senderName)

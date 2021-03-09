@@ -523,6 +523,7 @@ class client:
 
             # Upon every iteration, the state of known rooms, all known users, and all users in the
             # clients current room are updated.
+            time.sleep(1)
             self.getUsersInCurrentRoom()
             time.sleep(1)
             self.getAllRooms()
