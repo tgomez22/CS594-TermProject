@@ -15,7 +15,8 @@ class server:
         # key = roomName, value = list of clients joined in room
         self.roomDictionary = {"Lobby": []}
         self.name = "Tristan and Lydia's IRC Server"
-        self.host = '192.168.1.6'
+        self.host = '127.0.0.1'
+        #'192.168.1.6'
         self.port = 6667
         self.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # socket.create_server((host, port))
@@ -44,7 +45,7 @@ class server:
             clientRequestPacket = pickle.loads(data)
             print(f"Hot off the byte stream: {clientRequestPacket.header.opCode}")
             responsePacket = self.handlePacket(clientRequestPacket, connection)
-            if(responsePacket == None):
+            if(responsePacket == None and clientRequestPacket.header.opCode != ircOpcodes.LEAVE_ROOM_REQ):
                 clientAlive = False
             else:
                 try:

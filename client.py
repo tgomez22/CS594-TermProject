@@ -36,7 +36,8 @@ class client:
         self.knownUsers = []
         self.currentRoomUsers = []
         self.serverPort = 6667
-        self.serverIP = "192.168.1.6"
+        self.serverIP = '127.0.0.1'
+        #"home.jadelab.net"
         self.buffSize = 4096
         self.wantToQuit = False
         self.mutex = threading.Lock()
@@ -479,8 +480,9 @@ class client:
     def getUsersInCurrentRoom(self):
         """This method sends a request to the server for a list of users 
             who are in the room that the requesting client currently is in"""
+        
         self.mutex.acquire()
-        if "private: " in self.currentRoom:
+        if "private" in self.currentRoom:
             self.mutex.release()
             return
         listUsersPayload = str(self.currentRoom)
@@ -532,9 +534,7 @@ class client:
             self.getAllRooms()
             time.sleep(1)
             self.getAllUsers()
-
-            messageBody=input("Message: ")
-            userMessage = str.lower(messageBody)
+            userMessage = str.lower(input("Message: "))
 
             if(userMessage == "-quit" or userMessage == "-q"):
                 userDone = True
@@ -568,7 +568,7 @@ class client:
                 self.sendPrivateMessage()
 
             # leave room
-            elif(userMessage == "-leaveroom" or userMessage == "-lrm"):
+            elif(userMessage == "-leaveroom"):
                 self.leaveRoom()
 
             # send broadcast message
@@ -581,7 +581,7 @@ class client:
 
             # send message to room
             else:
-                self.sendMessage(messageBody)
+                self.sendMessage(userMessage)
 
     def listMyRooms(self):
         """This method displays all of the rooms a user is currently joined to. """
@@ -685,6 +685,8 @@ class client:
         self.mutex.acquire()
         if(self.currentRoom == "Lobby"):
             print("Sorry, but you cannot leave the Lobby")
+            self.mutex.release()
+            return
         else:
             length = len(self.currentRoom) + len(self.name)
             header = ircHeader(ircOpcodes.LEAVE_ROOM_REQ, length)
