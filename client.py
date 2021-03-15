@@ -141,11 +141,12 @@ class client:
         """This method is only used by the secondary, "listening" thread for the client
         It takes a packet as its sole argument. This method then checks the packet's opcode to determine
         how to handle the packet."""
-
+        if serverResponse is None:
+            pass
         # FORWARD_MESSAGE
         # A message was received from another client who is also subscribed to a room
         # that this client is also subscribed to. This will update the stored messages for this room.
-        if(serverResponse.header.opCode == ircOpcodes.FORWARD_MESSAGE):
+        elif(serverResponse.header.opCode == ircOpcodes.FORWARD_MESSAGE):
             self.mutex.acquire()
             self.messageDictionary[serverResponse.payload.receiverName].append(
                 serverResponse.payload.message.senderName + ": " + serverResponse.payload.message.messageBody)
